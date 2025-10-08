@@ -30,3 +30,11 @@ class DummyAlgorithm(BaseAlgorithm):
     def get_fittest_individual(self):
         """Returns a placeholder string, as this is a dummy algorithm."""
         return "No individual, this is a dummy algorithm."
+
+    def get_state(self):
+        """Returns the current state of the dummy algorithm."""
+        return {"generation": self.generation}
+
+    def set_state(self, state):
+        """Restores the state of the dummy algorithm."""
+        self.generation = state.get("generation", 0)
