@@ -1,0 +1,27 @@
+# -----------------------------------------------------------------------------
+# Example Configuration for Evolutionary Framework
+# -----------------------------------------------------------------------------
+# This file defines the parameters for running comparative experiments.
+# These values can be overridden by command-line arguments.
+
+# --- Experiment-wide Settings ---
+trials: 10
+generations: 100
+output_file: "config_run_plot.png"
+
+# --- Population and Individual Settings ---
+population_size: 100
+individual_size: 20
+
+# --- Genetic Operator Settings ---
+crossover_rate: 0.8
+tournament_size: 5
+elitism_size: 2
+
+# --- Algorithm-specific Mutation Rates ---
+# For the Epigenetic Algorithm (EGA)
+genotype_mutation_rate: 0.01
+epigenome_mutation_rate: 0.05
+
+# For the Standard Algorithm (SGA)
+mutation_rate: 0.01

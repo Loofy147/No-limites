@@ -1,8 +1,10 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+import yaml
 
 from registry import ALGORITHMS, FITNESS_FUNCTIONS, register_core_components
+
 
 def run_single_experiment(algorithm_name, fitness_function_name, args):
     """
@@ -27,6 +29,7 @@ def run_single_experiment(algorithm_name, fitness_function_name, args):
 
     return fitness_history
 
+
 def main(args):
     """
     Main function to run and manage experiments.
@@ -39,13 +42,13 @@ def main(args):
         {
             "label": "EGA (Deceptive)",
             "algorithm_name": "ega",
-            "fitness_function_name": "deceptive"
+            "fitness_function_name": "deceptive",
         },
         {
             "label": "Standard GA (Deceptive)",
             "algorithm_name": "standard",
-            "fitness_function_name": "deceptive"
-        }
+            "fitness_function_name": "deceptive",
+        },
     ]
 
     aggregated_results = []
@@ -56,25 +59,24 @@ def main(args):
         for i in range(args.trials):
             print(f"  Trial {i + 1}/{args.trials}...")
             history = run_single_experiment(
-                exp['algorithm_name'],
-                exp['fitness_function_name'],
-                args
+                exp["algorithm_name"], exp["fitness_function_name"], args
             )
             all_trial_histories.append(history)
 
         # Aggregate results using numpy
         # This calculates the mean performance over all trials for each generation
         mean_history = np.mean(all_trial_histories, axis=0).tolist()
-        aggregated_results.append((exp['label'], mean_history))
+        aggregated_results.append((exp["label"], mean_history))
 
     # Plot the aggregated results
     plot_comparative_history(
         aggregated_results,
         title="EGA vs. Standard GA on Deceptive Problem",
-        output_file=args.output_file
+        output_file=args.output_file,
     )
 
     print("\n--- Experiment Complete ---")
+
 
 def plot_comparative_history(results, title, output_file):
     """
@@ -94,9 +96,15 @@ def plot_comparative_history(results, title, output_file):
         avg_fitness = [f[1] for f in history]
 
         # Plot best fitness with a solid line
-        line, = plt.plot(generations, best_fitness, label=f"{label} (Best)")
+        (line,) = plt.plot(generations, best_fitness, label=f"{label} (Best)")
         # Plot average fitness with a dashed line of the same color
-        plt.plot(generations, avg_fitness, linestyle='--', color=line.get_color(), label=f"{label} (Avg)")
+        plt.plot(
+            generations,
+            avg_fitness,
+            linestyle="--",
+            color=line.get_color(),
+            label=f"{label} (Avg)",
+        )
 
     plt.title(title)
     plt.xlabel("Generation")
@@ -108,18 +116,56 @@ def plot_comparative_history(results, title, output_file):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run comparative experiments for Genetic Algorithms.")
-    parser.add_argument('--trials', type=int, default=10, help='Number of trials to run for each experiment.')
-    parser.add_argument('--population_size', type=int, default=100, help='Size of the population.')
-    parser.add_argument('--individual_size', type=int, default=20, help='Size of the individual genome for deceptive problem.')
-    parser.add_argument('--generations', type=int, default=100, help='Number of generations to run.')
-    parser.add_argument('--genotype_mutation_rate', type=float, default=0.01, help='Mutation rate for the genotype.')
-    parser.add_argument('--epigenome_mutation_rate', type=float, default=0.05, help='Mutation rate for the epigenome.')
-    parser.add_argument('--mutation_rate', type=float, default=0.01, help='Mutation rate for the standard GA.')
-    parser.add_argument('--crossover_rate', type=float, default=0.8, help='Crossover rate.')
-    parser.add_argument('--tournament_size', type=int, default=5, help='Size of the selection tournament.')
-    parser.add_argument('--elitism_size', type=int, default=2, help='Number of elite individuals to carry over.')
-    parser.add_argument('--output_file', type=str, default='comparative_plot.png', help='File to save the final comparison plot to.')
+    # --- Argument Parsing with Config File Support ---
+    parser = argparse.ArgumentParser(
+        description="Run comparative experiments for Genetic Algorithms."
+    )
+    parser.add_argument("--config", type=str, help="Path to a YAML configuration file.")
 
-    args = parser.parse_args()
+    # First, parse just the config file argument
+    config_args, remaining_argv = parser.parse_known_args()
+
+    config = {}
+    if config_args.config:
+        with open(config_args.config, "r") as f:
+            config = yaml.safe_load(f)
+
+    # Now, create a new parser for all arguments
+    parser = argparse.ArgumentParser(
+        parents=[parser], add_help=False
+    )  # Inherit --config
+    parser.add_argument(
+        "--trials", type=int, help="Number of trials to run for each experiment."
+    )
+    parser.add_argument("--population_size", type=int, help="Size of the population.")
+    parser.add_argument(
+        "--individual_size",
+        type=int,
+        help="Size of the individual genome for deceptive problem.",
+    )
+    parser.add_argument("--generations", type=int, help="Number of generations to run.")
+    parser.add_argument(
+        "--genotype_mutation_rate", type=float, help="Mutation rate for the genotype."
+    )
+    parser.add_argument(
+        "--epigenome_mutation_rate", type=float, help="Mutation rate for the epigenome."
+    )
+    parser.add_argument(
+        "--mutation_rate", type=float, help="Mutation rate for the standard GA."
+    )
+    parser.add_argument("--crossover_rate", type=float, help="Crossover rate.")
+    parser.add_argument(
+        "--tournament_size", type=int, help="Size of the selection tournament."
+    )
+    parser.add_argument(
+        "--elitism_size", type=int, help="Number of elite individuals to carry over."
+    )
+    parser.add_argument(
+        "--output_file", type=str, help="File to save the final comparison plot to."
+    )
+
+    # Set defaults from config file, then parse the remaining args
+    parser.set_defaults(**config)
+    args = parser.parse_args(remaining_argv)
+
     main(args)

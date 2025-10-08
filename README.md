@@ -46,7 +46,11 @@ pip install -r requirements.txt
 
 ## How to Run Experiments
 
-The `main.py` script is now a flexible runner that allows you to configure and run experiments.
+There are two primary ways to run experiments:
+
+### 1. Using Command-Line Arguments
+
+The `main.py` script is a flexible runner that allows you to configure and run a single experiment.
 
 To run an experiment with default parameters (EGA on One-Max), execute:
 
@@ -64,6 +68,17 @@ Example of a custom run:
 ```bash
 python3 main.py --algorithm standard --fitness_func deceptive --generations 200 --output_file standard_vs_deceptive.png
 ```
+
+### 2. Using a Configuration File for Batch Trials
+
+For more systematic and reproducible experiments, you can use the `run_experiment.py` script with a YAML configuration file. This script runs multiple trials for each defined experiment and aggregates the results, which is essential for scientific comparison.
+
+1.  **Edit the Configuration:** Modify the `example_config.yaml` file to define your experiment parameters.
+2.  **Run the Experiment:**
+    ```bash
+    python3 run_experiment.py --config example_config.yaml
+    ```
+    *Note: You can still override any parameter from the config file by providing it as a command-line argument.*
 
 ## Output
 
@@ -88,6 +103,13 @@ The results clearly demonstrate the EGA's superior performance in escaping the d
 This experiment provides strong evidence that the Epigenetic Genetic Algorithm is a more robust optimization technique for complex fitness landscapes with deceptive local optima.
 
 ---
+
+## Contributing
+
+Contributions to this framework are welcome. To ensure code quality and consistency, please adhere to the following guidelines:
+
+1.  **Code Style:** This project uses the `black` code formatter. Before submitting any changes, please format your code by running `black .` from the root of the project directory. You can install it with `pip install -r requirements-dev.txt`.
+2.  **Extensibility:** When adding new components, please follow the existing architectural patterns (e.g., inherit from `BaseAlgorithm`, register components in `registry.py`).
 
 ## Framework Architecture
 

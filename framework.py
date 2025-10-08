@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class BaseAlgorithm(ABC):
     """
     An abstract base class for all genetic algorithms in the framework.

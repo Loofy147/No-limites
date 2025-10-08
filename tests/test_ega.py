@@ -3,6 +3,7 @@ from unittest import mock
 import random
 from ega import Individual, Population, EpigeneticAlgorithm
 
+
 class TestIndividual(unittest.TestCase):
     def setUp(self):
         self.size = 10
@@ -19,6 +20,7 @@ class TestIndividual(unittest.TestCase):
         phenotype = self.individual.calculate_phenotype()
         expected_phenotype = [1, 0, 0, 0, 1, 0, 0, 0, 1, 1]
         self.assertEqual(phenotype, expected_phenotype)
+
 
 class TestPopulation(unittest.TestCase):
     def setUp(self):
@@ -37,6 +39,7 @@ class TestPopulation(unittest.TestCase):
         fittest = self.population.get_fittest()
         self.assertEqual(fittest.fitness, self.pop_size - 1)
 
+
 class TestEpigeneticAlgorithm(unittest.TestCase):
     def setUp(self):
         # Set a fixed seed for reproducibility
@@ -48,7 +51,7 @@ class TestEpigeneticAlgorithm(unittest.TestCase):
             epigenome_mutation_rate=0.5,
             crossover_rate=0.8,
             tournament_size=3,
-            elitism_size=1
+            elitism_size=1,
         )
 
     def test_initialization(self):
@@ -64,8 +67,9 @@ class TestEpigeneticAlgorithm(unittest.TestCase):
         parent2.epigenome = [1] * 8
 
         # Force crossover to happen by mocking random calls
-        with mock.patch('random.random', return_value=0.0), \
-             mock.patch('random.randint', return_value=4):
+        with mock.patch("random.random", return_value=0.0), mock.patch(
+            "random.randint", return_value=4
+        ):
             child = self.ega._crossover(parent1, parent2)
             self.assertEqual(child.genotype, [0, 0, 0, 0, 1, 1, 1, 1])
             self.assertEqual(child.epigenome, [0, 0, 0, 0, 1, 1, 1, 1])
@@ -76,7 +80,7 @@ class TestEpigeneticAlgorithm(unittest.TestCase):
         individual.epigenome = [0] * 8
 
         # Force mutation to happen by mocking random.random to be less than any rate
-        with mock.patch('random.random', return_value=0.0):
+        with mock.patch("random.random", return_value=0.0):
             self.ega._mutate(individual)
             self.assertEqual(individual.genotype, [1] * 8)
             self.assertEqual(individual.epigenome, [1] * 8)
@@ -98,8 +102,11 @@ class TestEpigeneticAlgorithm(unittest.TestCase):
         self.ega.evolve(dummy_fitness)
 
         # Check if the elite individual is present in the new population
-        new_population_genomes = [(ind.genotype, ind.epigenome) for ind in self.ega.population]
+        new_population_genomes = [
+            (ind.genotype, ind.epigenome) for ind in self.ega.population
+        ]
         self.assertIn((original_genotype, original_epigenome), new_population_genomes)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

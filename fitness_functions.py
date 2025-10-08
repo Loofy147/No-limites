@@ -5,6 +5,7 @@ def one_max_fitness(phenotype):
     """
     return sum(phenotype)
 
+
 def deceptive_fitness(chromosome):
     """
     A deceptive fitness function with a local optimum (trap).

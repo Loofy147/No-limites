@@ -3,6 +3,7 @@ from unittest import mock
 import random
 from standard_ga import StandardIndividual, StandardPopulation, StandardAlgorithm
 
+
 class TestStandardIndividual(unittest.TestCase):
     def setUp(self):
         self.size = 10
@@ -11,6 +12,7 @@ class TestStandardIndividual(unittest.TestCase):
     def test_initialization(self):
         self.assertEqual(len(self.individual.genotype), self.size)
         self.assertEqual(self.individual.fitness, 0)
+
 
 class TestStandardPopulation(unittest.TestCase):
     def setUp(self):
@@ -29,6 +31,7 @@ class TestStandardPopulation(unittest.TestCase):
         fittest = self.population.get_fittest()
         self.assertEqual(fittest.fitness, self.pop_size - 1)
 
+
 class TestStandardAlgorithm(unittest.TestCase):
     def setUp(self):
         random.seed(42)
@@ -38,7 +41,7 @@ class TestStandardAlgorithm(unittest.TestCase):
             mutation_rate=0.1,
             crossover_rate=0.8,
             tournament_size=3,
-            elitism_size=1
+            elitism_size=1,
         )
 
     def test_initialization(self):
@@ -51,8 +54,9 @@ class TestStandardAlgorithm(unittest.TestCase):
         parent1.genotype = [0] * 8
         parent2.genotype = [1] * 8
 
-        with mock.patch('random.random', return_value=0.0), \
-             mock.patch('random.randint', return_value=4):
+        with mock.patch("random.random", return_value=0.0), mock.patch(
+            "random.randint", return_value=4
+        ):
             child = self.sga._crossover(parent1, parent2)
             self.assertEqual(child.genotype, [0, 0, 0, 0, 1, 1, 1, 1])
 
@@ -60,7 +64,7 @@ class TestStandardAlgorithm(unittest.TestCase):
         individual = StandardIndividual(8)
         individual.genotype = [0] * 8
 
-        with mock.patch('random.random', return_value=0.0):
+        with mock.patch("random.random", return_value=0.0):
             self.sga._mutate(individual)
             self.assertEqual(individual.genotype, [1] * 8)
 
@@ -78,5 +82,6 @@ class TestStandardAlgorithm(unittest.TestCase):
         new_population_genomes = [ind.genotype for ind in self.sga.population]
         self.assertIn(original_genotype, new_population_genomes)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,7 @@
 import random
 from framework import BaseAlgorithm
 
+
 class Individual:
     """
     Represents an individual in the population.
@@ -8,6 +9,7 @@ class Individual:
     An individual has both a genotype (the underlying genetic material) and an
     epigenome (which controls the expression of the genotype).
     """
+
     def __init__(self, size):
         """
         Initializes an Individual with a random genotype and epigenome.
@@ -29,15 +31,18 @@ class Individual:
         return [g & e for g, e in zip(self.genotype, self.epigenome)]
 
     def __repr__(self):
-        return (f"Genotype:  {''.join(map(str, self.genotype))}\n"
-                f"Epigenome: {''.join(map(str, self.epigenome))}\n"
-                f"Fitness:   {self.fitness}")
+        return (
+            f"Genotype:  {''.join(map(str, self.genotype))}\n"
+            f"Epigenome: {''.join(map(str, self.epigenome))}\n"
+            f"Fitness:   {self.fitness}"
+        )
 
 
 class Population:
     """
     Represents a collection of individuals.
     """
+
     def __init__(self, population_size, individual_size):
         """
         Initializes a population of individuals.
@@ -68,9 +73,18 @@ class EpigeneticAlgorithm(BaseAlgorithm):
     This algorithm evolves a population of individuals, each with a genotype
     and an epigenome, to solve an optimization problem.
     """
-    def __init__(self, population_size, individual_size,
-                 genotype_mutation_rate, epigenome_mutation_rate,
-                 crossover_rate, tournament_size, elitism_size, **kwargs):
+
+    def __init__(
+        self,
+        population_size,
+        individual_size,
+        genotype_mutation_rate,
+        epigenome_mutation_rate,
+        crossover_rate,
+        tournament_size,
+        elitism_size,
+        **kwargs,
+    ):
         """
         Initializes the Epigenetic Genetic Algorithm.
 
@@ -112,9 +126,14 @@ class EpigeneticAlgorithm(BaseAlgorithm):
         if random.random() < self.crossover_rate:
             crossover_point = random.randint(1, len(parent1.genotype) - 1)
             # Crossover for genotype
-            child.genotype = parent1.genotype[:crossover_point] + parent2.genotype[crossover_point:]
+            child.genotype = (
+                parent1.genotype[:crossover_point] + parent2.genotype[crossover_point:]
+            )
             # Crossover for epigenome
-            child.epigenome = parent1.epigenome[:crossover_point] + parent2.epigenome[crossover_point:]
+            child.epigenome = (
+                parent1.epigenome[:crossover_point]
+                + parent2.epigenome[crossover_point:]
+            )
         else:
             child.genotype = parent1.genotype[:]
             child.epigenome = parent1.epigenome[:]
@@ -155,8 +174,10 @@ class EpigeneticAlgorithm(BaseAlgorithm):
 
         # Apply elitism: carry over the best individuals
         if self.elitism_size > 0:
-            sorted_population = sorted(self.population.individuals, key=lambda ind: ind.fitness, reverse=True)
-            elites = sorted_population[:self.elitism_size]
+            sorted_population = sorted(
+                self.population.individuals, key=lambda ind: ind.fitness, reverse=True
+            )
+            elites = sorted_population[: self.elitism_size]
             new_population_individuals.extend(elites)
 
         # Create the rest of the new individuals through evolution
