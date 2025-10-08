@@ -78,6 +78,10 @@ For more systematic and reproducible experiments, you can use the `run_experimen
     ```bash
     python3 run_experiment.py --config example_config.yaml
     ```
+    - **For high-performance execution**, use the `--parallel` flag to specify the number of CPU cores to use. For example, to use 4 cores:
+    ```bash
+    python3 run_experiment.py --config example_config.yaml --parallel 4
+    ```
     *Note: You can still override any parameter from the config file by providing it as a command-line argument.*
 
 ## Output

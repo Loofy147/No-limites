@@ -1,18 +1,30 @@
 import argparse
-import numpy as np
+import multiprocessing as mp
+import os
+import random
+import time
+from functools import partial
+
 import matplotlib.pyplot as plt
+import numpy as np
 import yaml
 
 from registry import ALGORITHMS, FITNESS_FUNCTIONS, register_core_components
 
 
-def run_single_experiment(algorithm_name, fitness_function_name, args):
+def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
     """
     Runs a single instance of a genetic algorithm for a set number of generations.
-
-    Returns:
-        list: The fitness history (best_fitness, avg_fitness) for the run.
+    This function is designed to be called by a worker process.
     """
+    # --- Process-Safe Seeding ---
+    # Ensure each parallel trial has a unique random seed by combining
+    # the time, its own process ID, and the trial ID.
+    seed = int(time.time()) + os.getpid() + trial_id
+    random.seed(seed)
+    np.random.seed(seed)
+
+    print(f"  Starting Trial {trial_id + 1} (PID: {os.getpid()})...")
     try:
         algorithm_class = ALGORITHMS[algorithm_name]
         fitness_function = FITNESS_FUNCTIONS[fitness_function_name]
@@ -27,6 +39,7 @@ def run_single_experiment(algorithm_name, fitness_function_name, args):
         best_fitness, avg_fitness = algorithm.evolve(fitness_function)
         fitness_history.append((best_fitness, avg_fitness))
 
+    print(f"  Finished Trial {trial_id + 1}.")
     return fitness_history
 
 
@@ -55,16 +68,26 @@ def main(args):
 
     for exp in experiments:
         print(f"\nRunning experiment: {exp['label']}")
-        all_trial_histories = []
-        for i in range(args.trials):
-            print(f"  Trial {i + 1}/{args.trials}...")
-            history = run_single_experiment(
-                exp["algorithm_name"], exp["fitness_function_name"], args
-            )
-            all_trial_histories.append(history)
+
+        # Use functools.partial to create a worker function with fixed arguments
+        worker_function = partial(
+            run_single_trial,
+            algorithm_name=exp["algorithm_name"],
+            fitness_function_name=exp["fitness_function_name"],
+            args=args,
+        )
+
+        if args.parallel > 1:
+            print(f"  Running {args.trials} trials in parallel on {args.parallel} cores...")
+            # Use a multiprocessing pool to run trials in parallel
+            with mp.Pool(processes=args.parallel) as pool:
+                all_trial_histories = pool.map(worker_function, range(args.trials))
+        else:
+            print(f"  Running {args.trials} trials in serial...")
+            # Run trials sequentially for debugging or when parallelism is not desired
+            all_trial_histories = [worker_function(i) for i in range(args.trials)]
 
         # Aggregate results using numpy
-        # This calculates the mean performance over all trials for each generation
         mean_history = np.mean(all_trial_histories, axis=0).tolist()
         aggregated_results.append((exp["label"], mean_history))
 
@@ -135,33 +158,37 @@ if __name__ == "__main__":
         parents=[parser], add_help=False
     )  # Inherit --config
     parser.add_argument(
-        "--trials", type=int, help="Number of trials to run for each experiment."
+        "--trials", type=int, default=10, help="Number of trials to run for each experiment."
     )
-    parser.add_argument("--population_size", type=int, help="Size of the population.")
+    parser.add_argument("--population_size", type=int, default=100, help="Size of the population.")
     parser.add_argument(
         "--individual_size",
         type=int,
+        default=20,
         help="Size of the individual genome for deceptive problem.",
     )
-    parser.add_argument("--generations", type=int, help="Number of generations to run.")
+    parser.add_argument("--generations", type=int, default=100, help="Number of generations to run.")
     parser.add_argument(
-        "--genotype_mutation_rate", type=float, help="Mutation rate for the genotype."
+        "--genotype_mutation_rate", type=float, default=0.01, help="Mutation rate for the genotype."
     )
     parser.add_argument(
-        "--epigenome_mutation_rate", type=float, help="Mutation rate for the epigenome."
+        "--epigenome_mutation_rate", type=float, default=0.05, help="Mutation rate for the epigenome."
     )
     parser.add_argument(
-        "--mutation_rate", type=float, help="Mutation rate for the standard GA."
+        "--mutation_rate", type=float, default=0.01, help="Mutation rate for the standard GA."
     )
-    parser.add_argument("--crossover_rate", type=float, help="Crossover rate.")
+    parser.add_argument("--crossover_rate", type=float, default=0.8, help="Crossover rate.")
     parser.add_argument(
-        "--tournament_size", type=int, help="Size of the selection tournament."
-    )
-    parser.add_argument(
-        "--elitism_size", type=int, help="Number of elite individuals to carry over."
+        "--tournament_size", type=int, default=5, help="Size of the selection tournament."
     )
     parser.add_argument(
-        "--output_file", type=str, help="File to save the final comparison plot to."
+        "--elitism_size", type=int, default=2, help="Number of elite individuals to carry over."
+    )
+    parser.add_argument(
+        "--output_file", type=str, default='comparative_plot.png', help="File to save the final comparison plot to."
+    )
+    parser.add_argument(
+        "--parallel", type=int, default=1, help="Number of cores to use for parallel execution. Defaults to 1 (serial)."
     )
 
     # Set defaults from config file, then parse the remaining args
