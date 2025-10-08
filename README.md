@@ -21,6 +21,7 @@ In this implementation, the phenotype (the solution that is evaluated by the fit
 
 - **Genotype Mutation Rate:** Kept low to ensure stability.
 - **Epigenome Mutation Rate:** Kept high to encourage rapid adaptation and exploration.
+- **Elitism:** The best individuals from one generation are automatically carried over to the next, ensuring that the best-found solutions are never lost.
 
 This allows the algorithm to "test" turning genes on or off via the epigenome before committing to a change in the underlying genotype.
 

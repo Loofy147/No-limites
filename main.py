@@ -10,6 +10,8 @@ GENOTYPE_MUTATION_RATE = 0.01
 EPIGENOME_MUTATION_RATE = 0.05
 CROSSOVER_RATE = 0.8
 TOURNAMENT_SIZE = 5
+# Number of top individuals to carry over to the next generation
+ELITISM_SIZE = 2
 
 def one_max_fitness(phenotype):
     """
@@ -29,7 +31,8 @@ def main():
         genotype_mutation_rate=GENOTYPE_MUTATION_RATE,
         epigenome_mutation_rate=EPIGENOME_MUTATION_RATE,
         crossover_rate=CROSSOVER_RATE,
-        tournament_size=TOURNAMENT_SIZE
+        tournament_size=TOURNAMENT_SIZE,
+        elitism_size=ELITISM_SIZE
     )
 
     print("--- Starting Epigenetic Genetic Algorithm for the One-Max Problem ---")

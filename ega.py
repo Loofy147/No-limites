@@ -69,7 +69,7 @@ class EpigeneticAlgorithm:
     """
     def __init__(self, population_size, individual_size,
                  genotype_mutation_rate, epigenome_mutation_rate,
-                 crossover_rate, tournament_size):
+                 crossover_rate, tournament_size, elitism_size):
         """
         Initializes the Epigenetic Genetic Algorithm.
 
@@ -81,12 +81,15 @@ class EpigeneticAlgorithm:
             crossover_rate (float): The rate at which to perform crossover.
             tournament_size (int): The number of individuals to select for a
                                  tournament.
+            elitism_size (int): The number of fittest individuals to carry over
+                              to the next generation.
         """
         self.population = Population(population_size, individual_size)
         self.genotype_mutation_rate = genotype_mutation_rate
         self.epigenome_mutation_rate = epigenome_mutation_rate
         self.crossover_rate = crossover_rate
         self.tournament_size = tournament_size
+        self.elitism_size = elitism_size
 
     def _calculate_fitness(self, individual, fitness_function):
         """Calculates and sets the fitness for an individual."""
@@ -131,20 +134,27 @@ class EpigeneticAlgorithm:
 
     def evolve(self, fitness_function):
         """
-        Performs one full cycle of evolution: selection, crossover, mutation.
+        Performs one full cycle of evolution: selection, crossover, mutation,
+        and elitism.
         """
         # First, calculate fitness for the entire current population
         for ind in self.population.individuals:
             self._calculate_fitness(ind, fitness_function)
 
-        new_population = Population(len(self.population), len(self.population[0].genotype))
+        new_population_individuals = []
 
-        # Create new individuals for the next generation
-        for i in range(len(self.population)):
+        # Apply elitism: carry over the best individuals
+        if self.elitism_size > 0:
+            sorted_population = sorted(self.population.individuals, key=lambda ind: ind.fitness, reverse=True)
+            elites = sorted_population[:self.elitism_size]
+            new_population_individuals.extend(elites)
+
+        # Create the rest of the new individuals through evolution
+        for _ in range(len(self.population) - self.elitism_size):
             parent1 = self._selection()
             parent2 = self._selection()
             child = self._crossover(parent1, parent2)
             self._mutate(child)
-            new_population.individuals[i] = child
+            new_population_individuals.append(child)
 
-        self.population = new_population
+        self.population.individuals = new_population_individuals
