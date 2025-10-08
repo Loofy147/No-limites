@@ -1,4 +1,5 @@
 import random
+import numpy as np
 from framework import BaseAlgorithm
 
 
@@ -126,3 +127,17 @@ class StandardAlgorithm(BaseAlgorithm):
     def get_fittest_individual(self):
         """Returns the best individual from the population."""
         return self.population.get_fittest()
+
+    def get_state(self):
+        """Returns the current state of the algorithm for checkpointing."""
+        return {
+            "population": self.population,
+            "random_state": random.getstate(),
+            "numpy_random_state": np.random.get_state(),
+        }
+
+    def set_state(self, state):
+        """Restores the algorithm's state from a checkpoint."""
+        self.population = state["population"]
+        random.setstate(state["random_state"])
+        np.random.set_state(state["numpy_random_state"])

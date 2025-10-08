@@ -1,6 +1,7 @@
 import argparse
 import multiprocessing as mp
 import os
+import pickle
 import random
 import time
 from functools import partial
@@ -34,10 +35,43 @@ def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
     # Pass all argparse arguments to the constructor.
     algorithm = algorithm_class(**vars(args))
 
+    start_generation = 0
     fitness_history = []
-    for _ in range(args.generations):
+
+    # --- Resuming Logic ---
+    checkpoint_filename = (
+        f"checkpoint_{algorithm_name}_{fitness_function_name}_trial_{trial_id}.pkl"
+    )
+    if args.resume and os.path.exists(checkpoint_filename):
+        print(f"    Resuming from checkpoint: {checkpoint_filename}")
+        with open(checkpoint_filename, "rb") as f:
+            state = pickle.load(f)
+        algorithm.set_state(state["algorithm_state"])
+        start_generation = state["generation"]
+        fitness_history = state["fitness_history"]
+
+    # --- Evolution Loop with Checkpointing ---
+    for generation in range(start_generation, args.generations):
         best_fitness, avg_fitness = algorithm.evolve(fitness_function)
         fitness_history.append((best_fitness, avg_fitness))
+
+        # Check if we should save a checkpoint
+        if (
+            args.checkpoint_interval > 0
+            and (generation + 1) % args.checkpoint_interval == 0
+        ):
+            # Use the same unique filename for saving
+            state = {
+                "trial_id": trial_id,
+                "generation": generation + 1,
+                "algorithm_state": algorithm.get_state(),
+                "fitness_history": fitness_history,
+                "args": args,
+            }
+            with open(checkpoint_filename, "wb") as f:
+                pickle.dump(state, f)
+            print(f"    ... Saved checkpoint for Trial {trial_id + 1} at generation {generation + 1}")
+
 
     print(f"  Finished Trial {trial_id + 1}.")
     return fitness_history
@@ -189,6 +223,15 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--parallel", type=int, default=1, help="Number of cores to use for parallel execution. Defaults to 1 (serial)."
+    )
+    parser.add_argument(
+        "--checkpoint_interval", type=int, default=0, help="Save a checkpoint every N generations. 0 to disable."
+    )
+    parser.add_argument(
+        "--checkpoint_file", type=str, default="checkpoint.pkl", help="Path to save checkpoint file."
+    )
+    parser.add_argument(
+        "--resume", action="store_true", help="Resume experiment from the last checkpoint."
     )
 
     # Set defaults from config file, then parse the remaining args

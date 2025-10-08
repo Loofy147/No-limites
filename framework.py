@@ -42,3 +42,19 @@ class BaseAlgorithm(ABC):
             object: The fittest individual object.
         """
         pass
+
+    @abstractmethod
+    def get_state(self):
+        """
+        Returns a dictionary representing the current state of the algorithm.
+        This is used for checkpointing.
+        """
+        pass
+
+    @abstractmethod
+    def set_state(self, state):
+        """
+        Restores the state of the algorithm from a state dictionary.
+        This is used for resuming from a checkpoint.
+        """
+        pass
