@@ -25,6 +25,17 @@ In this implementation, the phenotype (the solution that is evaluated by the fit
 
 This allows the algorithm to "test" turning genes on or off via the epigenome before committing to a change in the underlying genotype.
 
+## Comparative Analysis
+
+To demonstrate the capabilities of the Epigenetic Genetic Algorithm (EGA), this project now includes a framework for comparative analysis. You can run the EGA against a **Standard Genetic Algorithm (SGA)** on different types of problems.
+
+### Fitness Functions
+
+Two fitness functions are available to test the algorithms:
+
+1.  **One-Max (`onemax`):** A classic, simple optimization problem where the goal is to evolve a binary string of all 1s. This is useful for baseline performance testing.
+2.  **Deceptive Function (`deceptive`):** A more challenging problem designed with a "trap" local optimum. It rewards strings of all 0s, but the true global optimum is a string of all 1s, which receives a much higher score. This function is designed to test an algorithm's ability to maintain diversity and escape local optima.
+
 ## Installation
 
 To run the project, first install the necessary dependencies:
@@ -33,11 +44,11 @@ To run the project, first install the necessary dependencies:
 pip install -r requirements.txt
 ```
 
-## How to Run the Example
+## How to Run Experiments
 
-This repository includes a simple example that uses the EGA to solve the classic "One-Max" problem.
+The `main.py` script is now a flexible runner that allows you to configure and run experiments.
 
-To run the example with default parameters, execute the `main.py` script:
+To run an experiment with default parameters (EGA on One-Max), execute:
 
 ```bash
 python3 main.py
@@ -51,7 +62,7 @@ python3 main.py --help
 
 Example of a custom run:
 ```bash
-python3 main.py --generations 200 --population_size 50 --epigenome_mutation_rate 0.1
+python3 main.py --algorithm standard --fitness_func deceptive --generations 200 --output_file standard_vs_deceptive.png
 ```
 
 ## Output
