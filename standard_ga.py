@@ -1,4 +1,5 @@
 import random
+from framework import BaseAlgorithm
 
 class StandardIndividual:
     """
@@ -29,12 +30,12 @@ class StandardPopulation:
     def __getitem__(self, index):
         return self.individuals[index]
 
-class StandardAlgorithm:
+class StandardAlgorithm(BaseAlgorithm):
     """
     Implements a standard Genetic Algorithm for comparison.
     """
     def __init__(self, population_size, individual_size, mutation_rate,
-                 crossover_rate, tournament_size, elitism_size):
+                 crossover_rate, tournament_size, elitism_size, **kwargs):
         self.population = StandardPopulation(population_size, individual_size)
         self.mutation_rate = mutation_rate
         self.crossover_rate = crossover_rate
@@ -99,3 +100,7 @@ class StandardAlgorithm:
         avg_fitness = total_fitness / len(self.population)
 
         return best_fitness, avg_fitness
+
+    def get_fittest_individual(self):
+        """Returns the best individual from the population."""
+        return self.population.get_fittest()

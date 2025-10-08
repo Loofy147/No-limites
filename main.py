@@ -1,7 +1,6 @@
 import argparse
 import matplotlib.pyplot as plt
-from ega import EpigeneticAlgorithm
-from standard_ga import StandardAlgorithm
+from registry import ALGORITHMS, FITNESS_FUNCTIONS
 
 def plot_fitness_history(results, title, output_file="fitness_plot.png"):
     """
@@ -33,71 +32,30 @@ def plot_fitness_history(results, title, output_file="fitness_plot.png"):
     plt.savefig(output_file)
     print(f"\nFitness plot saved to {output_file}")
 
-def one_max_fitness(phenotype):
-    """
-    The fitness function for the One-Max problem.
-    Calculates the sum of the bits in the phenotype.
-    """
-    return sum(phenotype)
-
-def deceptive_fitness(chromosome):
-    """
-    A deceptive fitness function with a local optimum (trap).
-
-    - The global optimum is a string of all 1s, which gives the highest fitness.
-    - A local optimum is a string of all 0s, which gives a high, but not the highest, fitness.
-    - Otherwise, fitness is the count of 0s, deceptively guiding the search
-      towards the local optimum.
-    """
-    # Global optimum (all 1s) gets the highest score
-    if sum(chromosome) == len(chromosome):
-        return len(chromosome) * 2
-
-    # The deceptive trap: reward strings of 0s
-    num_zeros = chromosome.count(0)
-
-    # Local optimum (all 0s) gets a high score, but lower than the global optimum
-    if num_zeros == len(chromosome):
-        return len(chromosome)
-
-    return num_zeros
-
 def main(args):
     """
     Main function to run the selected Genetic Algorithm.
     """
-    # --- Select Fitness Function ---
+    # --- Select Components from Registry ---
+    try:
+        fitness_function = FITNESS_FUNCTIONS[args.fitness_func]
+        algorithm_class = ALGORITHMS[args.algorithm]
+    except KeyError as e:
+        raise ValueError(f"Component not found in registry: {e}")
+
+    # --- Determine Target Fitness ---
     if args.fitness_func == 'onemax':
-        fitness_function = one_max_fitness
         target_fitness = args.individual_size
     elif args.fitness_func == 'deceptive':
-        fitness_function = deceptive_fitness
         target_fitness = args.individual_size * 2
     else:
-        raise ValueError("Invalid fitness function specified.")
+        # This case is for future, more complex fitness functions
+        target_fitness = float('inf')
 
     # --- Initialize Algorithm ---
-    if args.algorithm == 'ega':
-        algorithm = EpigeneticAlgorithm(
-            population_size=args.population_size,
-            individual_size=args.individual_size,
-            genotype_mutation_rate=args.genotype_mutation_rate,
-            epigenome_mutation_rate=args.epigenome_mutation_rate,
-            crossover_rate=args.crossover_rate,
-            tournament_size=args.tournament_size,
-            elitism_size=args.elitism_size
-        )
-    elif args.algorithm == 'standard':
-        algorithm = StandardAlgorithm(
-            population_size=args.population_size,
-            individual_size=args.individual_size,
-            mutation_rate=args.mutation_rate,
-            crossover_rate=args.crossover_rate,
-            tournament_size=args.tournament_size,
-            elitism_size=args.elitism_size
-        )
-    else:
-        raise ValueError("Invalid algorithm specified.")
+    # Pass all argparse arguments to the constructor.
+    # The algorithm's __init__ will pick the ones it needs.
+    algorithm = algorithm_class(**vars(args))
 
     print(f"--- Running {args.algorithm.upper()} with {args.fitness_func.upper()} function ---")
     print(f"Configuration: {vars(args)}")
@@ -120,7 +78,7 @@ def main(args):
             break
 
     # Get the final best individual
-    final_fittest = algorithm.population.get_fittest()
+    final_fittest = algorithm.get_fittest_individual()
     print("\n--- Final Best Individual ---")
     print(final_fittest)
 
@@ -143,8 +101,8 @@ if __name__ == "__main__":
     parser.add_argument('--output_file', type=str, default='fitness_plot.png', help='File to save the fitness plot to.')
 
     # Arguments for comparative analysis
-    parser.add_argument('--algorithm', type=str, default='ega', choices=['ega', 'standard'], help='The algorithm to run.')
-    parser.add_argument('--fitness_func', type=str, default='onemax', choices=['onemax', 'deceptive'], help='The fitness function to use.')
+    parser.add_argument('--algorithm', type=str, default='ega', choices=ALGORITHMS.keys(), help='The algorithm to run.')
+    parser.add_argument('--fitness_func', type=str, default='onemax', choices=FITNESS_FUNCTIONS.keys(), help='The fitness function to use.')
     parser.add_argument('--mutation_rate', type=float, default=0.01, help='Mutation rate for the standard GA.')
 
 
