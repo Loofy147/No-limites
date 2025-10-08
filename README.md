@@ -86,3 +86,42 @@ The results clearly demonstrate the EGA's superior performance in escaping the d
 -   **Epigenetic GA (EGA):** The EGA also initially explores the local optimum. However, its unique two-layered evolution allows it to maintain diversity and continue exploring. The rapidly mutating epigenome allows individuals to "test" new gene expressions without losing the underlying genetic material. This flexibility enables the EGA to eventually discover the global optimum (a fitness score of 40) and escape the deceptive trap where the SGA fails.
 
 This experiment provides strong evidence that the Epigenetic Genetic Algorithm is a more robust optimization technique for complex fitness landscapes with deceptive local optima.
+
+---
+
+## Framework Architecture
+
+This project is designed as a modular and extensible framework for evolutionary computation experiments. The core architectural principles are:
+
+1.  **Abstract Base Classes:** Core concepts are defined as abstract base classes (e.g., `BaseAlgorithm` in `framework.py`). This enforces a consistent interface and a set of rules that all concrete implementations must follow, ensuring architectural integrity.
+2.  **Component Registry:** A centralized registry (`registry.py`) is used for component discovery. Algorithms and fitness functions are "registered" with a unique name, decoupling the experiment runners from the implementations.
+3.  **Dynamic Loading:** The experiment runners (`main.py`, `run_experiment.py`) are data-driven. They use the registry to dynamically load the requested algorithm and fitness function by name from the command line, making them automatically compatible with any new component that gets registered.
+
+## Extending the Framework
+
+Adding your own custom components is straightforward.
+
+### How to Add a New Algorithm
+
+1.  **Create the Algorithm File:** Create a new Python file (e.g., `my_new_algorithm.py`).
+2.  **Implement the Algorithm Class:** Inside the file, create a class that inherits from `BaseAlgorithm` (from `framework.py`). You must implement all abstract methods:
+    - `__init__(self, **kwargs)`: Your constructor. It should accept `**kwargs` to be compatible with the argument parser.
+    - `evolve(self, fitness_function)`: The method that runs one generation of evolution.
+    - `get_fittest_individual(self)`: A method that returns the best individual found.
+    *(See `dummy_algorithm.py` for a minimal example.)*
+3.  **Register the Algorithm:** Open `registry.py`, import your new class, and add a registration line:
+    ```python
+    from my_new_algorithm import MyNewAlgorithm
+    register_algorithm('my_new_algo', MyNewAlgorithm)
+    ```
+
+### How to Add a New Fitness Function
+
+1.  **Define the Function:** Add your new fitness function to `fitness_functions.py`.
+2.  **Register the Function:** Open `registry.py`, import your new function, and add a registration line:
+    ```python
+    from fitness_functions import my_new_fitness_func
+    register_fitness_function('my_func', my_new_fitness_func)
+    ```
+
+Your new components will now be automatically available to the experiment runners via the command line (e.g., `--algorithm my_new_algo`).

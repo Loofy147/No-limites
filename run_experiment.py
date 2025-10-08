@@ -2,39 +2,23 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ega import EpigeneticAlgorithm
-from standard_ga import StandardAlgorithm
-from main import one_max_fitness, deceptive_fitness
+from registry import ALGORITHMS, FITNESS_FUNCTIONS, register_core_components
 
-def run_single_experiment(algorithm_class, fitness_function, args):
+def run_single_experiment(algorithm_name, fitness_function_name, args):
     """
     Runs a single instance of a genetic algorithm for a set number of generations.
 
     Returns:
         list: The fitness history (best_fitness, avg_fitness) for the run.
     """
-    # Instantiate the correct algorithm based on the class provided
-    if algorithm_class == EpigeneticAlgorithm:
-        algorithm = EpigeneticAlgorithm(
-            population_size=args.population_size,
-            individual_size=args.individual_size,
-            genotype_mutation_rate=args.genotype_mutation_rate,
-            epigenome_mutation_rate=args.epigenome_mutation_rate,
-            crossover_rate=args.crossover_rate,
-            tournament_size=args.tournament_size,
-            elitism_size=args.elitism_size
-        )
-    elif algorithm_class == StandardAlgorithm:
-        algorithm = StandardAlgorithm(
-            population_size=args.population_size,
-            individual_size=args.individual_size,
-            mutation_rate=args.mutation_rate,
-            crossover_rate=args.crossover_rate,
-            tournament_size=args.tournament_size,
-            elitism_size=args.elitism_size
-        )
-    else:
-        raise ValueError("Invalid algorithm class provided.")
+    try:
+        algorithm_class = ALGORITHMS[algorithm_name]
+        fitness_function = FITNESS_FUNCTIONS[fitness_function_name]
+    except KeyError as e:
+        raise ValueError(f"Component not found in registry: {e}")
+
+    # Pass all argparse arguments to the constructor.
+    algorithm = algorithm_class(**vars(args))
 
     fitness_history = []
     for _ in range(args.generations):
@@ -54,13 +38,13 @@ def main(args):
     experiments = [
         {
             "label": "EGA (Deceptive)",
-            "algorithm_class": EpigeneticAlgorithm,
-            "fitness_function": deceptive_fitness
+            "algorithm_name": "ega",
+            "fitness_function_name": "deceptive"
         },
         {
             "label": "Standard GA (Deceptive)",
-            "algorithm_class": StandardAlgorithm,
-            "fitness_function": deceptive_fitness
+            "algorithm_name": "standard",
+            "fitness_function_name": "deceptive"
         }
     ]
 
@@ -72,8 +56,8 @@ def main(args):
         for i in range(args.trials):
             print(f"  Trial {i + 1}/{args.trials}...")
             history = run_single_experiment(
-                exp['algorithm_class'],
-                exp['fitness_function'],
+                exp['algorithm_name'],
+                exp['fitness_function_name'],
                 args
             )
             all_trial_histories.append(history)

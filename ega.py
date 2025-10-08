@@ -1,4 +1,5 @@
 import random
+from framework import BaseAlgorithm
 
 class Individual:
     """
@@ -60,7 +61,7 @@ class Population:
         return self.individuals[index]
 
 
-class EpigeneticAlgorithm:
+class EpigeneticAlgorithm(BaseAlgorithm):
     """
     Implements the Epigenetic Genetic Algorithm.
 
@@ -69,7 +70,7 @@ class EpigeneticAlgorithm:
     """
     def __init__(self, population_size, individual_size,
                  genotype_mutation_rate, epigenome_mutation_rate,
-                 crossover_rate, tournament_size, elitism_size):
+                 crossover_rate, tournament_size, elitism_size, **kwargs):
         """
         Initializes the Epigenetic Genetic Algorithm.
 
@@ -178,3 +179,7 @@ class EpigeneticAlgorithm:
         avg_fitness = total_fitness / len(self.population)
 
         return best_fitness, avg_fitness
+
+    def get_fittest_individual(self):
+        """Returns the best individual from the population."""
+        return self.population.get_fittest()
