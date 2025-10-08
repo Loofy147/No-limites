@@ -1,5 +1,6 @@
 from framework import BaseAlgorithm
 
+
 class DummyAlgorithm(BaseAlgorithm):
     """
     A simple 'dummy' algorithm for demonstration purposes.

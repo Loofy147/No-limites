@@ -1,25 +1,33 @@
 import random
 from framework import BaseAlgorithm
 
+
 class StandardIndividual:
     """
     Represents an individual in a standard Genetic Algorithm.
     It has a single genotype and no epigenome.
     """
+
     def __init__(self, size):
         self.genotype = [random.randint(0, 1) for _ in range(size)]
         self.fitness = 0
 
     def __repr__(self):
-        return (f"Genotype: {''.join(map(str, self.genotype))}\n"
-                f"Fitness:  {self.fitness}")
+        return (
+            f"Genotype: {''.join(map(str, self.genotype))}\n"
+            f"Fitness:  {self.fitness}"
+        )
+
 
 class StandardPopulation:
     """
     Represents a collection of StandardIndividuals.
     """
+
     def __init__(self, population_size, individual_size):
-        self.individuals = [StandardIndividual(individual_size) for _ in range(population_size)]
+        self.individuals = [
+            StandardIndividual(individual_size) for _ in range(population_size)
+        ]
 
     def get_fittest(self):
         return max(self.individuals, key=lambda ind: ind.fitness)
@@ -30,12 +38,22 @@ class StandardPopulation:
     def __getitem__(self, index):
         return self.individuals[index]
 
+
 class StandardAlgorithm(BaseAlgorithm):
     """
     Implements a standard Genetic Algorithm for comparison.
     """
-    def __init__(self, population_size, individual_size, mutation_rate,
-                 crossover_rate, tournament_size, elitism_size, **kwargs):
+
+    def __init__(
+        self,
+        population_size,
+        individual_size,
+        mutation_rate,
+        crossover_rate,
+        tournament_size,
+        elitism_size,
+        **kwargs,
+    ):
         self.population = StandardPopulation(population_size, individual_size)
         self.mutation_rate = mutation_rate
         self.crossover_rate = crossover_rate
@@ -54,7 +72,9 @@ class StandardAlgorithm(BaseAlgorithm):
         child = StandardIndividual(len(parent1.genotype))
         if random.random() < self.crossover_rate:
             crossover_point = random.randint(1, len(parent1.genotype) - 1)
-            child.genotype = parent1.genotype[:crossover_point] + parent2.genotype[crossover_point:]
+            child.genotype = (
+                parent1.genotype[:crossover_point] + parent2.genotype[crossover_point:]
+            )
         else:
             child.genotype = parent1.genotype[:]
         return child
@@ -76,8 +96,10 @@ class StandardAlgorithm(BaseAlgorithm):
 
         # Elitism
         if self.elitism_size > 0:
-            sorted_population = sorted(self.population.individuals, key=lambda ind: ind.fitness, reverse=True)
-            elites = sorted_population[:self.elitism_size]
+            sorted_population = sorted(
+                self.population.individuals, key=lambda ind: ind.fitness, reverse=True
+            )
+            elites = sorted_population[: self.elitism_size]
             new_population_individuals.extend(elites)
 
         # Create the rest of the new generation
