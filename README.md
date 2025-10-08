@@ -25,14 +25,38 @@ In this implementation, the phenotype (the solution that is evaluated by the fit
 
 This allows the algorithm to "test" turning genes on or off via the epigenome before committing to a change in the underlying genotype.
 
+## Installation
+
+To run the project, first install the necessary dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
 ## How to Run the Example
 
-This repository includes a simple example that uses the EGA to solve the classic "One-Max" problem, where the goal is to evolve a binary string of all 1s.
+This repository includes a simple example that uses the EGA to solve the classic "One-Max" problem.
 
-To run the example, simply execute the `main.py` script:
+To run the example with default parameters, execute the `main.py` script:
 
 ```bash
 python3 main.py
 ```
 
-You will see the algorithm progress through generations, printing the best fitness score at each step. At the end, it will display the genotype, epigenome, and final fitness of the best individual found.
+You can also customize the algorithm's parameters using command-line arguments. For a full list of options, run:
+
+```bash
+python3 main.py --help
+```
+
+Example of a custom run:
+```bash
+python3 main.py --generations 200 --population_size 50 --epigenome_mutation_rate 0.1
+```
+
+## Output
+
+After each run, the script will:
+1.  Print the best and average fitness for each generation to the console.
+2.  Display the genotype, epigenome, and final fitness of the best individual found.
+3.  Generate a plot named `fitness_plot.png` that visually represents the best and average fitness over the generations.

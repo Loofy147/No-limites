@@ -1,17 +1,25 @@
+import argparse
+import matplotlib.pyplot as plt
 from ega import EpigeneticAlgorithm
 
-# --- Parameters ---
-POPULATION_SIZE = 100
-INDIVIDUAL_SIZE = 50
-GENERATIONS = 100
-# A lower, stable mutation rate for the core genetic code
-GENOTYPE_MUTATION_RATE = 0.01
-# A higher, more adaptive mutation rate for gene expression
-EPIGENOME_MUTATION_RATE = 0.05
-CROSSOVER_RATE = 0.8
-TOURNAMENT_SIZE = 5
-# Number of top individuals to carry over to the next generation
-ELITISM_SIZE = 2
+def plot_fitness_history(fitness_history, output_file="fitness_plot.png"):
+    """
+    Plots the best and average fitness over generations and saves it to a file.
+    """
+    generations = range(len(fitness_history))
+    best_fitness = [f[0] for f in fitness_history]
+    avg_fitness = [f[1] for f in fitness_history]
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(generations, best_fitness, label="Best Fitness")
+    plt.plot(generations, avg_fitness, label="Average Fitness")
+    plt.title("EGA Performance: Fitness Over Generations")
+    plt.xlabel("Generation")
+    plt.ylabel("Fitness")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(output_file)
+    print(f"\nFitness plot saved to {output_file}")
 
 def one_max_fitness(phenotype):
     """
@@ -20,41 +28,39 @@ def one_max_fitness(phenotype):
     """
     return sum(phenotype)
 
-def main():
+def main(args):
     """
     Main function to run the Epigenetic Genetic Algorithm.
     """
-    # Initialize the algorithm with our parameters
+    # Initialize the algorithm with parameters from argparse
     ega = EpigeneticAlgorithm(
-        population_size=POPULATION_SIZE,
-        individual_size=INDIVIDUAL_SIZE,
-        genotype_mutation_rate=GENOTYPE_MUTATION_RATE,
-        epigenome_mutation_rate=EPIGENOME_MUTATION_RATE,
-        crossover_rate=CROSSOVER_RATE,
-        tournament_size=TOURNAMENT_SIZE,
-        elitism_size=ELITISM_SIZE
+        population_size=args.population_size,
+        individual_size=args.individual_size,
+        genotype_mutation_rate=args.genotype_mutation_rate,
+        epigenome_mutation_rate=args.epigenome_mutation_rate,
+        crossover_rate=args.crossover_rate,
+        tournament_size=args.tournament_size,
+        elitism_size=args.elitism_size
     )
 
     print("--- Starting Epigenetic Genetic Algorithm for the One-Max Problem ---")
-    print(f"Target fitness: {INDIVIDUAL_SIZE}\n")
+    print(f"Configuration: {vars(args)}")
+    print(f"Target fitness: {args.individual_size}\n")
+
+    fitness_history = []
 
     # Evolution loop
-    for generation in range(GENERATIONS):
-        # Evolve the population for one generation
-        ega.evolve(one_max_fitness)
+    for generation in range(args.generations):
+        # Evolve the population and get stats
+        best_fitness, avg_fitness = ega.evolve(one_max_fitness)
+        fitness_history.append((best_fitness, avg_fitness))
 
-        # Recalculate fitness for the new population to find the best
-        for ind in ega.population.individuals:
-            phenotype = ind.calculate_phenotype()
-            ind.fitness = one_max_fitness(phenotype)
-
-        fittest_individual = ega.population.get_fittest()
-
-        print(f"Generation {generation + 1}/{GENERATIONS} | "
-              f"Best Fitness: {fittest_individual.fitness}")
+        print(f"Generation {generation + 1}/{args.generations} | "
+              f"Best Fitness: {best_fitness:.2f} | "
+              f"Avg Fitness: {avg_fitness:.2f}")
 
         # Check for solution
-        if fittest_individual.fitness == INDIVIDUAL_SIZE:
+        if best_fitness == args.individual_size:
             print("\n--- Solution Found! ---")
             break
 
@@ -63,5 +69,19 @@ def main():
     print("\n--- Final Best Individual ---")
     print(final_fittest)
 
+    # Plot the fitness history
+    plot_fitness_history(fitness_history)
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run the Epigenetic Genetic Algorithm.")
+    parser.add_argument('--population_size', type=int, default=100, help='Size of the population.')
+    parser.add_argument('--individual_size', type=int, default=50, help='Size of the individual genome.')
+    parser.add_argument('--generations', type=int, default=100, help='Number of generations to run.')
+    parser.add_argument('--genotype_mutation_rate', type=float, default=0.01, help='Mutation rate for the genotype.')
+    parser.add_argument('--epigenome_mutation_rate', type=float, default=0.05, help='Mutation rate for the epigenome.')
+    parser.add_argument('--crossover_rate', type=float, default=0.8, help='Crossover rate.')
+    parser.add_argument('--tournament_size', type=int, default=5, help='Size of the selection tournament.')
+    parser.add_argument('--elitism_size', type=int, default=2, help='Number of elite individuals to carry over.')
+
+    args = parser.parse_args()
+    main(args)

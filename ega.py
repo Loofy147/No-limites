@@ -134,10 +134,19 @@ class EpigeneticAlgorithm:
 
     def evolve(self, fitness_function):
         """
-        Performs one full cycle of evolution: selection, crossover, mutation,
-        and elitism.
+        Performs one full cycle of evolution and returns performance stats.
+
+        The process includes:
+        1.  Fitness calculation for the current population.
+        2.  Selection of parents.
+        3.  Elitism to preserve the best individuals.
+        4.  Crossover and mutation to create the new generation.
+
+        Returns:
+            tuple: A tuple containing the best fitness and the average fitness
+                   of the new generation.
         """
-        # First, calculate fitness for the entire current population
+        # Calculate fitness for the current population to prepare for selection
         for ind in self.population.individuals:
             self._calculate_fitness(ind, fitness_function)
 
@@ -158,3 +167,14 @@ class EpigeneticAlgorithm:
             new_population_individuals.append(child)
 
         self.population.individuals = new_population_individuals
+
+        # Calculate fitness for the new generation and gather stats
+        total_fitness = 0
+        for ind in self.population.individuals:
+            self._calculate_fitness(ind, fitness_function)
+            total_fitness += ind.fitness
+
+        best_fitness = self.population.get_fittest().fitness
+        avg_fitness = total_fitness / len(self.population)
+
+        return best_fitness, avg_fitness
