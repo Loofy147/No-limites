@@ -167,6 +167,9 @@ class EpigeneticAlgorithm(BaseAlgorithm):
             tuple: A tuple containing the best fitness and the average fitness
                    of the new generation.
         """
+        # Allow the algorithm to adapt its own parameters
+        self.adapt_parameters()
+
         # Calculate fitness for the current population to prepare for selection
         for ind in self.population.individuals:
             self._calculate_fitness(ind, fitness_function)

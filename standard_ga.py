@@ -89,6 +89,9 @@ class StandardAlgorithm(BaseAlgorithm):
         """
         Performs one full cycle of evolution and returns performance stats.
         """
+        # Allow the algorithm to adapt its own parameters
+        self.adapt_parameters()
+
         # Calculate fitness for the current population
         for ind in self.population.individuals:
             self._calculate_fitness(ind, fitness_function)

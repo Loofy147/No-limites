@@ -1,6 +1,7 @@
 from ega import EpigeneticAlgorithm
 from standard_ga import StandardAlgorithm
 from dummy_algorithm import DummyAlgorithm
+from adaptive_ega import AdaptiveEGA
 from fitness_functions import one_max_fitness, deceptive_fitness
 
 # --- Component Registries ---
@@ -37,6 +38,7 @@ def register_core_components():
     register_algorithm("ega", EpigeneticAlgorithm)
     register_algorithm("standard", StandardAlgorithm)
     register_algorithm("dummy", DummyAlgorithm)
+    register_algorithm("adaptive_ega", AdaptiveEGA)
 
     # Register fitness functions
     register_fitness_function("onemax", one_max_fitness)

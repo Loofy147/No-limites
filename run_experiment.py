@@ -1,4 +1,5 @@
 import argparse
+import json
 import multiprocessing as mp
 import os
 import pickle
@@ -10,13 +11,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 
-from registry import ALGORITHMS, FITNESS_FUNCTIONS, register_core_components
+from registry import ALGORITHMS, FITNESS_FUNCTIONS
 
 
 def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
     """
-    Runs a single instance of a genetic algorithm for a set number of generations.
-    This function is designed to be called by a worker process.
+    Runs a single instance of a genetic algorithm for a set number of
+    generations. This function is designed to be called by a worker process.
     """
     # --- Process-Safe Seeding ---
     # Ensure each parallel trial has a unique random seed by combining
@@ -70,8 +71,10 @@ def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
             }
             with open(checkpoint_filename, "wb") as f:
                 pickle.dump(state, f)
-            print(f"    ... Saved checkpoint for Trial {trial_id + 1} at generation {generation + 1}")
-
+            print(
+                f"    ... Saved checkpoint for Trial {trial_id + 1} at "
+                f"generation {generation + 1}"
+            )
 
     print(f"  Finished Trial {trial_id + 1}.")
     return fitness_history
@@ -87,13 +90,13 @@ def main(args):
     # --- Define Experiments ---
     experiments = [
         {
-            "label": "EGA (Deceptive)",
-            "algorithm_name": "ega",
+            "label": "Adaptive EGA (Deceptive)",
+            "algorithm_name": "adaptive_ega",
             "fitness_function_name": "deceptive",
         },
         {
-            "label": "Standard GA (Deceptive)",
-            "algorithm_name": "standard",
+            "label": "Standard EGA (Deceptive)",
+            "algorithm_name": "ega",
             "fitness_function_name": "deceptive",
         },
     ]
@@ -112,7 +115,10 @@ def main(args):
         )
 
         if args.parallel > 1:
-            print(f"  Running {args.trials} trials in parallel on {args.parallel} cores...")
+            print(
+                f"  Running {args.trials} trials in parallel on "
+                f"{args.parallel} cores..."
+            )
             # Use a multiprocessing pool to run trials in parallel
             with mp.Pool(processes=args.parallel) as pool:
                 all_trial_histories = pool.map(worker_function, range(args.trials))
@@ -131,6 +137,15 @@ def main(args):
         title="EGA vs. Standard GA on Deceptive Problem",
         output_file=args.output_file,
     )
+
+    # --- Save Structured Results ---
+    results_data = {
+        "config": vars(args),
+        "results": aggregated_results,
+    }
+    with open(args.results_file, "w") as f:
+        json.dump(results_data, f, indent=4)
+    print(f"Structured results saved to {args.results_file}")
 
     print("\n--- Experiment Complete ---")
 
@@ -192,46 +207,103 @@ if __name__ == "__main__":
         parents=[parser], add_help=False
     )  # Inherit --config
     parser.add_argument(
-        "--trials", type=int, default=10, help="Number of trials to run for each experiment."
+        "--trials",
+        type=int,
+        default=10,
+        help="Number of trials to run for each experiment.",
     )
-    parser.add_argument("--population_size", type=int, default=100, help="Size of the population.")
+    parser.add_argument(
+        "--population_size", type=int, default=100, help="Size of the population."
+    )
     parser.add_argument(
         "--individual_size",
         type=int,
         default=20,
         help="Size of the individual genome for deceptive problem.",
     )
-    parser.add_argument("--generations", type=int, default=100, help="Number of generations to run.")
     parser.add_argument(
-        "--genotype_mutation_rate", type=float, default=0.01, help="Mutation rate for the genotype."
+        "--generations", type=int, default=100, help="Number of generations to run."
     )
     parser.add_argument(
-        "--epigenome_mutation_rate", type=float, default=0.05, help="Mutation rate for the epigenome."
+        "--genotype_mutation_rate",
+        type=float,
+        default=0.01,
+        help="Mutation rate for the genotype.",
     )
     parser.add_argument(
-        "--mutation_rate", type=float, default=0.01, help="Mutation rate for the standard GA."
-    )
-    parser.add_argument("--crossover_rate", type=float, default=0.8, help="Crossover rate.")
-    parser.add_argument(
-        "--tournament_size", type=int, default=5, help="Size of the selection tournament."
-    )
-    parser.add_argument(
-        "--elitism_size", type=int, default=2, help="Number of elite individuals to carry over."
+        "--epigenome_mutation_rate",
+        type=float,
+        default=0.05,
+        help="Mutation rate for the epigenome.",
     )
     parser.add_argument(
-        "--output_file", type=str, default='comparative_plot.png', help="File to save the final comparison plot to."
+        "--mutation_rate",
+        type=float,
+        default=0.01,
+        help="Mutation rate for the standard GA.",
     )
     parser.add_argument(
-        "--parallel", type=int, default=1, help="Number of cores to use for parallel execution. Defaults to 1 (serial)."
+        "--crossover_rate", type=float, default=0.8, help="Crossover rate."
     )
     parser.add_argument(
-        "--checkpoint_interval", type=int, default=0, help="Save a checkpoint every N generations. 0 to disable."
+        "--tournament_size",
+        type=int,
+        default=5,
+        help="Size of the selection tournament.",
     )
     parser.add_argument(
-        "--checkpoint_file", type=str, default="checkpoint.pkl", help="Path to save checkpoint file."
+        "--elitism_size",
+        type=int,
+        default=2,
+        help="Number of elite individuals to carry over.",
     )
     parser.add_argument(
-        "--resume", action="store_true", help="Resume experiment from the last checkpoint."
+        "--output_file",
+        type=str,
+        default="comparative_plot.png",
+        help="File to save the final comparison plot to.",
+    )
+    parser.add_argument(
+        "--parallel",
+        type=int,
+        default=1,
+        help="Number of cores to use for parallel execution. Defaults to 1 (serial).",
+    )
+    parser.add_argument(
+        "--checkpoint_interval",
+        type=int,
+        default=0,
+        help="Save a checkpoint every N generations. 0 to disable.",
+    )
+    parser.add_argument(
+        "--checkpoint_file",
+        type=str,
+        default="checkpoint.pkl",
+        help="Path to save checkpoint file.",
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume experiment from the last checkpoint.",
+    )
+    # --- Adaptive Algorithm Parameters ---
+    parser.add_argument(
+        "--stagnation_limit",
+        type=int,
+        default=15,
+        help="Generations to wait before adapting.",
+    )
+    parser.add_argument(
+        "--adaptation_factor",
+        type=float,
+        default=1.5,
+        help="Factor to increase mutation rate by.",
+    )
+    parser.add_argument(
+        "--results_file",
+        type=str,
+        default="experiment_results.json",
+        help="File to save the structured results to.",
     )
 
     # Set defaults from config file, then parse the remaining args

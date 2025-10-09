@@ -58,3 +58,10 @@ class BaseAlgorithm(ABC):
         This is used for resuming from a checkpoint.
         """
         pass
+
+    def adapt_parameters(self):
+        """
+        An optional method for algorithms to dynamically adapt their own
+        parameters during a run. Called once per generation.
+        """
+        pass

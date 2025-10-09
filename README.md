@@ -95,10 +95,10 @@ For more systematic and reproducible experiments, you can use the `run_experimen
 
 ## Output
 
-After each run, the `main.py` script will:
-1.  Print the best and average fitness for each generation to the console.
-2.  Display the genotype, epigenome, and final fitness of the best individual found.
-3.  Generate a plot that visually represents the best and average fitness over the generations.
+The framework produces two primary types of output:
+
+1.  **Visual Plots (`.png`):** Both `main.py` and `run_experiment.py` generate plots of the fitness over generations, which are useful for quick visual analysis.
+2.  **Structured Data (`.json`):** For rigorous analysis, `run_experiment.py` saves a complete record of the experiment to a JSON file (e.g., `experiment_results.json`). This file includes the full configuration and the aggregated fitness history, ensuring all results are reproducible and can be used for further study.
 
 ## Results and Analysis
 
@@ -115,14 +115,31 @@ The results clearly demonstrate the EGA's superior performance in escaping the d
 
 This experiment provides strong evidence that the Epigenetic Genetic Algorithm is a more robust optimization technique for complex fitness landscapes with deceptive local optima.
 
+## Adaptive Intelligence: The AdaptiveEGA
+
+To further enhance the "High Tech" capabilities of this framework, an `AdaptiveEGA` was developed. This algorithm inherits from the standard `EGA` but introduces a layer of self-adapting intelligence.
+
+**Strategy:** The `AdaptiveEGA` monitors its own performance. If it detects that the search has stagnated (i.e., the best fitness has not improved for a set number of generations), it temporarily increases the `epigenome_mutation_rate`. This burst of exploration is designed to help the algorithm escape local optima.
+
+### Results and Analysis
+
+A new comparative study was conducted between the `AdaptiveEGA` and the standard `EGA`.
+
+![Comparative Performance of the AdaptiveEGA](adaptive_comparison.png)
+
+### Analysis
+
+The results show that while both algorithms initially get trapped in the local optimum, the **`AdaptiveEGA` is significantly more effective at escaping it**. The plot shows its best fitness making sharp jumps after periods of stagnation, which corresponds to the adaptive mutation rate kicking in and successfully finding a path toward the global optimum. This demonstrates the power of adding a simple, intelligent, self-adapting layer to an evolutionary algorithm.
+
 ---
 
 ## Contributing
 
 Contributions to this framework are welcome. To ensure code quality and consistency, please adhere to the following guidelines:
 
-1.  **Code Style:** This project uses the `black` code formatter. Before submitting any changes, please format your code by running `black .` from the root of the project directory. You can install it with `pip install -r requirements-dev.txt`.
-2.  **Extensibility:** When adding new components, please follow the existing architectural patterns (e.g., inherit from `BaseAlgorithm`, register components in `registry.py`).
+1.  **Code Style & Quality:** This project uses `black` for formatting and `flake8` for linting. Before submitting any changes, please ensure your code is formatted and passes all linter checks.
+2.  **Automated Checks (CI):** All pull requests and pushes are automatically checked by a GitHub Actions workflow. Your contribution must pass all checks (formatting, linting, and unit tests) before it can be merged.
+3.  **Extensibility:** When adding new components, please follow the existing architectural patterns (e.g., inherit from `BaseAlgorithm`, register components in `registry.py`).
 
 ## Framework Architecture
 
@@ -143,7 +160,8 @@ Adding your own custom components is straightforward.
     - `__init__(self, **kwargs)`: Your constructor. It should accept `**kwargs` to be compatible with the argument parser.
     - `evolve(self, fitness_function)`: The method that runs one generation of evolution.
     - `get_fittest_individual(self)`: A method that returns the best individual found.
-    *(See `dummy_algorithm.py` for a minimal example.)*
+    - `adapt_parameters(self)`: (Optional) This method is called once per generation and can be used to implement self-adapting logic.
+    *(See `dummy_algorithm.py` for a minimal example and `adaptive_ega.py` for a real one.)*
 3.  **Register the Algorithm:** Open `registry.py`, import your new class, and add a registration line:
     ```python
     from my_new_algorithm import MyNewAlgorithm
