@@ -1,0 +1,75 @@
+{
+    "config": {
+        "config": null,
+        "trials": 2,
+        "population_size": 100,
+        "individual_size": 20,
+        "generations": 5,
+        "genotype_mutation_rate": 0.01,
+        "epigenome_mutation_rate": 0.05,
+        "mutation_rate": 0.01,
+        "crossover_rate": 0.8,
+        "tournament_size": 5,
+        "elitism_size": 2,
+        "output_file": "comparative_plot.png",
+        "parallel": 2,
+        "checkpoint_interval": 0,
+        "checkpoint_file": "checkpoint.pkl",
+        "resume": false,
+        "stagnation_limit": 15,
+        "adaptation_factor": 1.5,
+        "results_file": "experiment_results.json"
+    },
+    "results": [
+        [
+            "Adaptive EGA (Deceptive)",
+            [
+                [
+                    19.5,
+                    17.185000000000002
+                ],
+                [
+                    20.0,
+                    18.215
+                ],
+                [
+                    20.0,
+                    18.915
+                ],
+                [
+                    20.0,
+                    19.45
+                ],
+                [
+                    20.0,
+                    19.555
+                ]
+            ]
+        ],
+        [
+            "Standard EGA (Deceptive)",
+            [
+                [
+                    19.5,
+                    16.845
+                ],
+                [
+                    19.5,
+                    18.105
+                ],
+                [
+                    20.0,
+                    18.79
+                ],
+                [
+                    20.0,
+                    19.375
+                ],
+                [
+                    20.0,
+                    19.655
+                ]
+            ]
+        ]
+    ]
+}

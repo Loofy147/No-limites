@@ -11,21 +11,17 @@ class AdaptiveEGA(EpigeneticAlgorithm):
     local optima.
     """
 
-    def __init__(
-        self,
-        stagnation_limit=10,
-        adaptation_factor=1.5,
-        **kwargs,
-    ):
+    def __init__(self, stagnation_limit=10, adaptation_factor=1.5, **kwargs):
         """
         Initializes the AdaptiveEGA.
 
         Args:
-            stagnation_limit (int): The number of generations without improvement
-                                  before adaptation is triggered.
+            stagnation_limit (int): The number of generations without
+                improvement before adaptation is triggered.
             adaptation_factor (float): The factor by which to increase the
-                                     epigenome mutation rate during adaptation.
-            **kwargs: All other parameters required by the parent EpigeneticAlgorithm.
+                epigenome mutation rate during adaptation.
+            **kwargs: All other parameters required by the parent
+                EpigeneticAlgorithm.
         """
         # Initialize the parent class with all its required arguments
         super().__init__(**kwargs)
@@ -52,7 +48,10 @@ class AdaptiveEGA(EpigeneticAlgorithm):
             self.stagnation_counter = 0
             # Revert mutation rate to its base value if it was adapted
             if self.epigenome_mutation_rate != self.base_epigenome_mutation_rate:
-                print(f"    (i) New best found. Reverting epigenome mutation rate to {self.base_epigenome_mutation_rate:.3f}")
+                print(
+                    "    (i) New best found. Reverting epigenome mutation rate to "
+                    f"{self.base_epigenome_mutation_rate:.3f}"
+                )
                 self.epigenome_mutation_rate = self.base_epigenome_mutation_rate
         else:
             # No improvement, increment stagnation counter
@@ -60,11 +59,14 @@ class AdaptiveEGA(EpigeneticAlgorithm):
 
         # If stagnation limit is reached, trigger adaptation
         if self.stagnation_counter >= self.stagnation_limit:
-            print(f"    (!) Stagnation detected. Adapting epigenome mutation rate.")
+            print("    (!) Stagnation detected. Adapting epigenome mutation rate.")
             self.epigenome_mutation_rate *= self.adaptation_factor
             # Clamp the mutation rate to a maximum of 1.0
             self.epigenome_mutation_rate = min(self.epigenome_mutation_rate, 1.0)
-            print(f"        New epigenome mutation rate: {self.epigenome_mutation_rate:.3f}")
+            print(
+                "        New epigenome mutation rate: "
+                f"{self.epigenome_mutation_rate:.3f}"
+            )
             # Reset counter to give the new rate time to work
             self.stagnation_counter = 0
 

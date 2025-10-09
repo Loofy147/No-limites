@@ -10,8 +10,10 @@ def deceptive_fitness(chromosome):
     """
     A deceptive fitness function with a local optimum (trap).
 
-    - The global optimum is a string of all 1s, which gives the highest fitness.
-    - A local optimum is a string of all 0s, which gives a high, but not the highest, fitness.
+    - The global optimum is a string of all 1s, which gives the highest
+      fitness.
+    - A local optimum is a string of all 0s, which gives a high, but not
+      the highest, fitness.
     - Otherwise, fitness is the count of 0s, deceptively guiding the search
       towards the local optimum.
     """

@@ -1,6 +1,7 @@
 import unittest
 from adaptive_ega import AdaptiveEGA
 
+
 class TestAdaptiveEGA(unittest.TestCase):
     def setUp(self):
         """Set up a default AdaptiveEGA instance for testing."""
@@ -49,16 +50,21 @@ class TestAdaptiveEGA(unittest.TestCase):
         for _ in range(5):
             self.algo.adapt_parameters()
 
-        self.assertNotEqual(self.algo.epigenome_mutation_rate, self.algo.base_epigenome_mutation_rate)
+        self.assertNotEqual(
+            self.algo.epigenome_mutation_rate, self.algo.base_epigenome_mutation_rate
+        )
 
         # Now, simulate finding a better solution
-        self.algo.population.individuals[0].fitness = 25 # New best fitness
+        self.algo.population.individuals[0].fitness = 25  # New best fitness
         self.algo.adapt_parameters()
 
         # The mutation rate should have reverted to its base value
-        self.assertEqual(self.algo.epigenome_mutation_rate, self.algo.base_epigenome_mutation_rate)
+        self.assertEqual(
+            self.algo.epigenome_mutation_rate, self.algo.base_epigenome_mutation_rate
+        )
         self.assertEqual(self.algo.stagnation_counter, 0)
         self.assertEqual(self.algo.best_fitness_so_far, 25)
+
 
 if __name__ == "__main__":
     unittest.main()

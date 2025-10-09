@@ -95,10 +95,10 @@ For more systematic and reproducible experiments, you can use the `run_experimen
 
 ## Output
 
-After each run, the `main.py` script will:
-1.  Print the best and average fitness for each generation to the console.
-2.  Display the genotype, epigenome, and final fitness of the best individual found.
-3.  Generate a plot that visually represents the best and average fitness over the generations.
+The framework produces two primary types of output:
+
+1.  **Visual Plots (`.png`):** Both `main.py` and `run_experiment.py` generate plots of the fitness over generations, which are useful for quick visual analysis.
+2.  **Structured Data (`.json`):** For rigorous analysis, `run_experiment.py` saves a complete record of the experiment to a JSON file (e.g., `experiment_results.json`). This file includes the full configuration and the aggregated fitness history, ensuring all results are reproducible and can be used for further study.
 
 ## Results and Analysis
 
@@ -137,8 +137,9 @@ The results show that while both algorithms initially get trapped in the local o
 
 Contributions to this framework are welcome. To ensure code quality and consistency, please adhere to the following guidelines:
 
-1.  **Code Style:** This project uses the `black` code formatter. Before submitting any changes, please format your code by running `black .` from the root of the project directory. You can install it with `pip install -r requirements-dev.txt`.
-2.  **Extensibility:** When adding new components, please follow the existing architectural patterns (e.g., inherit from `BaseAlgorithm`, register components in `registry.py`).
+1.  **Code Style & Quality:** This project uses `black` for formatting and `flake8` for linting. Before submitting any changes, please ensure your code is formatted and passes all linter checks.
+2.  **Automated Checks (CI):** All pull requests and pushes are automatically checked by a GitHub Actions workflow. Your contribution must pass all checks (formatting, linting, and unit tests) before it can be merged.
+3.  **Extensibility:** When adding new components, please follow the existing architectural patterns (e.g., inherit from `BaseAlgorithm`, register components in `registry.py`).
 
 ## Framework Architecture
 

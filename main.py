@@ -66,7 +66,8 @@ def main(args):
     algorithm = algorithm_class(**vars(args))
 
     print(
-        f"--- Running {args.algorithm.upper()} with {args.fitness_func.upper()} function ---"
+        f"--- Running {args.algorithm.upper()} with "
+        f"{args.fitness_func.upper()} function ---"
     )
     print(f"Configuration: {vars(args)}")
     print(f"Target fitness: {target_fitness}\n")

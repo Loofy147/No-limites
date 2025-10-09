@@ -63,7 +63,10 @@ class TestFramework(unittest.TestCase):
             register_algorithm("duplicate_algo", MyTestAlgo)
 
     def test_duplicate_fitness_function_registration_raises_error(self):
-        """Test that registering a duplicate fitness function name raises a ValueError."""
+        """
+        Test that registering a duplicate fitness function name raises a
+        ValueError.
+        """
 
         def my_test_func(c):
             return 1
