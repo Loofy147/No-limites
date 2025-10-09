@@ -87,13 +87,13 @@ def main(args):
     # --- Define Experiments ---
     experiments = [
         {
-            "label": "EGA (Deceptive)",
-            "algorithm_name": "ega",
+            "label": "Adaptive EGA (Deceptive)",
+            "algorithm_name": "adaptive_ega",
             "fitness_function_name": "deceptive",
         },
         {
-            "label": "Standard GA (Deceptive)",
-            "algorithm_name": "standard",
+            "label": "Standard EGA (Deceptive)",
+            "algorithm_name": "ega",
             "fitness_function_name": "deceptive",
         },
     ]
@@ -232,6 +232,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--resume", action="store_true", help="Resume experiment from the last checkpoint."
+    )
+    # --- Adaptive Algorithm Parameters ---
+    parser.add_argument(
+        "--stagnation_limit", type=int, default=15, help="Generations to wait before adapting."
+    )
+    parser.add_argument(
+        "--adaptation_factor", type=float, default=1.5, help="Factor to increase mutation rate by."
     )
 
     # Set defaults from config file, then parse the remaining args

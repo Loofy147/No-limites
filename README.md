@@ -115,6 +115,22 @@ The results clearly demonstrate the EGA's superior performance in escaping the d
 
 This experiment provides strong evidence that the Epigenetic Genetic Algorithm is a more robust optimization technique for complex fitness landscapes with deceptive local optima.
 
+## Adaptive Intelligence: The AdaptiveEGA
+
+To further enhance the "High Tech" capabilities of this framework, an `AdaptiveEGA` was developed. This algorithm inherits from the standard `EGA` but introduces a layer of self-adapting intelligence.
+
+**Strategy:** The `AdaptiveEGA` monitors its own performance. If it detects that the search has stagnated (i.e., the best fitness has not improved for a set number of generations), it temporarily increases the `epigenome_mutation_rate`. This burst of exploration is designed to help the algorithm escape local optima.
+
+### Results and Analysis
+
+A new comparative study was conducted between the `AdaptiveEGA` and the standard `EGA`.
+
+![Comparative Performance of the AdaptiveEGA](adaptive_comparison.png)
+
+### Analysis
+
+The results show that while both algorithms initially get trapped in the local optimum, the **`AdaptiveEGA` is significantly more effective at escaping it**. The plot shows its best fitness making sharp jumps after periods of stagnation, which corresponds to the adaptive mutation rate kicking in and successfully finding a path toward the global optimum. This demonstrates the power of adding a simple, intelligent, self-adapting layer to an evolutionary algorithm.
+
 ---
 
 ## Contributing
@@ -143,7 +159,8 @@ Adding your own custom components is straightforward.
     - `__init__(self, **kwargs)`: Your constructor. It should accept `**kwargs` to be compatible with the argument parser.
     - `evolve(self, fitness_function)`: The method that runs one generation of evolution.
     - `get_fittest_individual(self)`: A method that returns the best individual found.
-    *(See `dummy_algorithm.py` for a minimal example.)*
+    - `adapt_parameters(self)`: (Optional) This method is called once per generation and can be used to implement self-adapting logic.
+    *(See `dummy_algorithm.py` for a minimal example and `adaptive_ega.py` for a real one.)*
 3.  **Register the Algorithm:** Open `registry.py`, import your new class, and add a registration line:
     ```python
     from my_new_algorithm import MyNewAlgorithm
