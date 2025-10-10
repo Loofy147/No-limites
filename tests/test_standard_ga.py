@@ -35,8 +35,9 @@ class TestStandardPopulation(unittest.TestCase):
 class TestStandardAlgorithm(unittest.TestCase):
     def setUp(self):
         random.seed(42)
+        self.population_size = 10
         self.sga = StandardAlgorithm(
-            population_size=10,
+            population_size=self.population_size,
             individual_size=8,
             mutation_rate=0.1,
             crossover_rate=0.8,
@@ -69,18 +70,59 @@ class TestStandardAlgorithm(unittest.TestCase):
             self.assertEqual(individual.genotype, [1] * 8)
 
     def test_evolve_with_elitism(self):
+        """
+        Test that elitism correctly preserves the fittest individual object
+        across generations.
+        """
+        # Define a simple fitness function for the test
         def dummy_fitness(genotype):
             return sum(genotype)
 
-        fittest_ind = self.sga.population[0]
-        fittest_ind.genotype = [1] * 8
+        # 1. Create a population where one individual is exceptionally fit
+        # Make all other individuals have low fitness
+        for ind in self.sga.population.individuals:
+            ind.genotype = [0] * 8
 
-        original_genotype = fittest_ind.genotype[:]
+        # Create a single, clearly fittest individual
+        fittest_individual = self.sga.population.individuals[0]
+        fittest_individual.genotype = [1] * 8
 
+        # 2. Calculate fitness and verify the setup
+        for ind in self.sga.population.individuals:
+            ind.fitness = dummy_fitness(ind.genotype)
+
+        # Sanity check that our chosen individual is indeed the fittest
+        self.assertIs(self.sga.population.get_fittest(), fittest_individual)
+        self.assertEqual(fittest_individual.fitness, 8)
+
+        # 3. Evolve the population for one generation
         self.sga.evolve(dummy_fitness)
 
-        new_population_genomes = [ind.genotype for ind in self.sga.population]
-        self.assertIn(original_genotype, new_population_genomes)
+        # 4. Assert that the *exact same object* is still in the new population
+        # This is a stronger check than just checking for the genotype.
+        self.assertIn(
+            fittest_individual,
+            self.sga.population.individuals,
+            "The fittest individual object should be preserved by elitism.",
+        )
+
+    def test_population_size_is_maintained(self):
+        """
+        Test that the population size remains constant after evolution,
+        especially when elitism is active.
+        """
+        initial_pop_size = self.sga.population_size
+        self.assertEqual(len(self.sga.population), initial_pop_size)
+
+        # Evolve the population
+        self.sga.evolve(lambda g: sum(g))
+
+        # Assert that the population size is unchanged
+        self.assertEqual(
+            len(self.sga.population),
+            initial_pop_size,
+            "Population size should not change after evolution.",
+        )
 
 
 if __name__ == "__main__":
