@@ -47,6 +47,33 @@ def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
         print(f"    Resuming from checkpoint: {checkpoint_filename}")
         with open(checkpoint_filename, "rb") as f:
             state = pickle.load(f)
+
+        # --- Parameter Validation for Resume ---
+        # Ensure the resumed experiment is consistent with the original.
+        original_args = state["args"]
+        critical_params = [
+            "population_size",
+            "individual_size",
+            "genotype_mutation_rate",
+            "epigenome_mutation_rate",
+            "mutation_rate",
+            "crossover_rate",
+            "tournament_size",
+            "elitism_size",
+            "stagnation_limit",
+            "adaptation_factor",
+        ]
+        for param in critical_params:
+            if hasattr(original_args, param) and hasattr(args, param):
+                original_val = getattr(original_args, param)
+                current_val = getattr(args, param)
+                if original_val != current_val:
+                    raise ValueError(
+                        f"Mismatched critical parameter '{param}' on resume. "
+                        f"Checkpoint had {original_val}, but current run has "
+                        f"{current_val}. Aborting to prevent invalid results."
+                    )
+
         algorithm.set_state(state["algorithm_state"])
         start_generation = state["generation"]
         fitness_history = state["fitness_history"]
