@@ -2,26 +2,40 @@ from ega import EpigeneticAlgorithm
 
 
 class AdaptiveEGA(EpigeneticAlgorithm):
-    """
-    An adaptive version of the Epigenetic Genetic Algorithm.
+    """An adaptive version of the Epigenetic Genetic Algorithm.
 
-    This algorithm enhances the standard EGA by dynamically adapting its own
-    parameters during a run. Specifically, it increases the epigenome mutation
-    rate when it detects that the search has stagnated, helping it to escape
+    This algorithm enhances the standard EGA by dynamically adapting its
+    hyperparameters during a run. It monitors its own performance and, upon
+    detecting stagnation (a lack of improvement in fitness), it temporarily
+    increases the epigenome mutation rate to encourage exploration and escape
     local optima.
+
+    Attributes:
+        stagnation_limit (int): The number of generations without fitness
+            improvement before adaptation is triggered.
+        adaptation_factor (float): The multiplicative factor used to
+            increase the epigenome mutation rate.
+        base_epigenome_mutation_rate (float): The original, baseline
+            epigenome mutation rate, which is restored after a successful
+            adaptation.
+        stagnation_counter (int): The number of consecutive generations
+            without improvement.
+        best_fitness_so_far (float): The highest fitness score observed
+            during the run.
     """
 
     def __init__(self, stagnation_limit=10, adaptation_factor=1.5, **kwargs):
-        """
-        Initializes the AdaptiveEGA.
+        """Initializes the AdaptiveEGA.
 
         Args:
-            stagnation_limit (int): The number of generations without
-                improvement before adaptation is triggered.
-            adaptation_factor (float): The factor by which to increase the
-                epigenome mutation rate during adaptation.
+            stagnation_limit (int, optional): The number of generations
+                without improvement before adaptation is triggered.
+                Defaults to 10.
+            adaptation_factor (float, optional): The factor by which to
+                increase the epigenome mutation rate during adaptation.
+                Defaults to 1.5.
             **kwargs: All other parameters required by the parent
-                EpigeneticAlgorithm.
+                `EpigeneticAlgorithm`.
         """
         # Initialize the parent class with all its required arguments
         super().__init__(**kwargs)
@@ -37,8 +51,13 @@ class AdaptiveEGA(EpigeneticAlgorithm):
         self.best_fitness_so_far = -float("inf")
 
     def adapt_parameters(self):
-        """
-        The core adaptation logic. Called once per generation.
+        """The core adaptation logic, called once per generation.
+
+        This method monitors the best fitness. If the fitness fails to
+        improve for `stagnation_limit` generations, it increases the
+        `epigenome_mutation_rate` by `adaptation_factor`. Once a new best
+        fitness is found, the mutation rate is reset to its original base
+        value.
         """
         current_best_fitness = self.population.get_fittest().fitness
 
@@ -71,7 +90,14 @@ class AdaptiveEGA(EpigeneticAlgorithm):
             self.stagnation_counter = 0
 
     def get_state(self):
-        """Overrides parent to include adaptive state for checkpointing."""
+        """Extends the parent `get_state` to include adaptive state.
+
+        This ensures that all variables related to the adaptation mechanism
+        are saved during checkpointing, allowing for a correct resume.
+
+        Returns:
+            dict: The state dictionary, including adaptive parameters.
+        """
         state = super().get_state()
         state["adaptive_state"] = {
             "stagnation_counter": self.stagnation_counter,
@@ -82,7 +108,14 @@ class AdaptiveEGA(EpigeneticAlgorithm):
         return state
 
     def set_state(self, state):
-        """Overrides parent to restore adaptive state from a checkpoint."""
+        """Extends the parent `set_state` to restore adaptive state.
+
+        This ensures that all adaptive parameters are correctly restored
+        from a checkpoint.
+
+        Args:
+            state (dict): The state dictionary to restore.
+        """
         super().set_state(state)
         adaptive_state = state["adaptive_state"]
         self.stagnation_counter = adaptive_state["stagnation_counter"]

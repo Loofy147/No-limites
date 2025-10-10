@@ -4,14 +4,17 @@ from registry import ALGORITHMS, FITNESS_FUNCTIONS
 
 
 def plot_fitness_history(results, title, output_file="fitness_plot.png"):
-    """
-    Plots the best and average fitness for one or more runs over generations.
+    """Plots the best and average fitness over generations and saves to a file.
 
     Args:
-        results (list): A list of tuples, where each tuple is
-                        (label, fitness_history).
+        results (list[tuple[str, list[tuple[float, float]]]]): A list of
+            tuples, where each tuple contains a label for the run and its
+            corresponding fitness history. The fitness history is a list of
+            tuples, each containing the best and average fitness for a
+            generation.
         title (str): The title for the plot.
-        output_file (str): The filename to save the plot to.
+        output_file (str, optional): The filename to save the plot to.
+            Defaults to "fitness_plot.png".
     """
     plt.figure(figsize=(12, 6))
 
@@ -41,8 +44,15 @@ def plot_fitness_history(results, title, output_file="fitness_plot.png"):
 
 
 def main(args):
-    """
-    Main function to run the selected Genetic Algorithm.
+    """Main function to run a single genetic algorithm experiment.
+
+    This function orchestrates a single run of a selected algorithm on a
+    chosen fitness function. It handles component loading, algorithm
+    initialization, the main evolution loop, and plotting the final results.
+
+    Args:
+        args (argparse.Namespace): An object containing the parsed
+            command-line arguments that configure the experiment.
     """
     # --- Select Components from Registry ---
     try:

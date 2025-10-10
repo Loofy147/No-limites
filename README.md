@@ -1,180 +1,147 @@
-# Epigenetic Genetic Algorithm (EGA)
+# Epigenetic Genetic Algorithm (EGA) Framework
 
-This project introduces a novel concept in evolutionary computation: the **Epigenetic Genetic Algorithm (EGA)**. It is inspired by the biological process of epigenetics, where gene expression is controlled by mechanisms other than changes to the DNA sequence itself.
+This project provides a modular and extensible framework for developing and analyzing evolutionary algorithms, centered around a novel **Epigenetic Genetic Algorithm (EGA)**. It is designed for researchers and developers to experiment with advanced genetic algorithms, compare their performance, and extend the framework with new components.
 
-## The Concept
+## Key Features
 
-Traditional Genetic Algorithms (GAs) can sometimes suffer from premature convergence, where the population gets stuck in a local optimum, losing the genetic diversity needed to find the global optimum.
+- **Modular Architecture:** Built on abstract base classes and a component registry, allowing for easy extension.
+- **Novel Algorithms:** Includes a unique Epigenetic Genetic Algorithm (EGA) and a self-adapting version (`AdaptiveEGA`).
+- **Comparative Analysis:** A robust experiment runner (`run_experiment.py`) for conducting multiple trials, aggregating results, and performing comparative analysis.
+- **Parallel Execution:** Built-in support for running experimental trials in parallel to accelerate research.
+- **Checkpointing & Resuming:** A checkpointing system to save and resume long-running experiments, preventing loss of progress.
+- **Configuration Driven:** Experiments can be defined in YAML files for reproducibility and easy modification.
+- **Automated Quality Checks:** Integrated with GitHub Actions for continuous integration (CI) to ensure code quality using `black`, `flake8`, and `unittest`.
 
-The EGA addresses this by introducing a two-tiered system for each individual:
+## The Epigenetic Concept
 
-1.  **Genotype:** This is the core, underlying genetic code, similar to a standard GA. It evolves at a slow, stable rate, preserving good genetic material over time.
-2.  **Epigenome:** This is a secondary layer of information that acts as a "mask" or "switch" for the genotype. It controls which genes in the genotype are actually *expressed* (i.e., contribute to the phenotype). The epigenome evolves at a much higher mutation rate.
+Traditional Genetic Algorithms (GAs) can suffer from premature convergence, where a population loses the genetic diversity needed to find a global optimum. The EGA introduces a dual-layered genetic system to address this:
 
-This dual system allows for a powerful balance between **exploration** and **exploitation**:
-- The rapidly changing **epigenome** allows an individual to quickly test new combinations of expressed genes and adapt to the fitness landscape without altering its core genetic code.
-- The slowly changing **genotype** preserves strong genetic building blocks, preventing the loss of good solutions.
+1.  **Genotype:** The core, slow-mutating genetic code that preserves strong solutions.
+2.  **Epigenome:** A rapidly-mutating layer that controls which genes in the genotype are *expressed*.
 
-## How It Works
-
-In this implementation, the phenotype (the solution that is evaluated by the fitness function) is calculated by performing a bitwise AND operation between the genotype and the epigenome.
-
-- **Genotype Mutation Rate:** Kept low to ensure stability.
-- **Epigenome Mutation Rate:** Kept high to encourage rapid adaptation and exploration.
-- **Elitism:** The best individuals from one generation are automatically carried over to the next, ensuring that the best-found solutions are never lost.
-
-This allows the algorithm to "test" turning genes on or off via the epigenome before committing to a change in the underlying genotype.
-
-## Comparative Analysis
-
-To demonstrate the capabilities of the Epigenetic Genetic Algorithm (EGA), this project now includes a framework for comparative analysis. You can run the EGA against a **Standard Genetic Algorithm (SGA)** on different types of problems.
-
-### Fitness Functions
-
-Two fitness functions are available to test the algorithms:
-
-1.  **One-Max (`onemax`):** A classic, simple optimization problem where the goal is to evolve a binary string of all 1s. This is useful for baseline performance testing.
-2.  **Deceptive Function (`deceptive`):** A more challenging problem designed with a "trap" local optimum. It rewards strings of all 0s, but the true global optimum is a string of all 1s, which receives a much higher score. This function is designed to test an algorithm's ability to maintain diversity and escape local optima.
+This separation allows for a powerful balance between **exploitation** (preserving good genotypes) and **exploration** (testing new gene combinations via the epigenome).
 
 ## Installation
 
-To run the project, first install the necessary dependencies:
+To set up the project, clone the repository and install the required dependencies. It is recommended to use a virtual environment.
 
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd <repository-directory>
+
+# Create and activate a virtual environment (optional but recommended)
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Install development dependencies (for running checks)
+pip install -r requirements-dev.txt
 ```
 
 ## How to Run Experiments
 
 There are two primary ways to run experiments:
 
-### 1. Using Command-Line Arguments
+### 1. Single Run (`main.py`)
 
-The `main.py` script is a flexible runner that allows you to configure and run a single experiment.
+The `main.py` script is ideal for quick, single-run experiments.
 
-To run an experiment with default parameters (EGA on One-Max), execute:
-
+**Default Run (EGA on One-Max):**
 ```bash
 python3 main.py
 ```
 
-You can also customize the algorithm's parameters using command-line arguments. For a full list of options, run:
-
+**Custom Run (Standard GA on Deceptive Problem):**
 ```bash
-python3 main.py --help
+python3 main.py --algorithm standard --fitness_func deceptive --generations 200
+```
+For a full list of configurable parameters, run `python3 main.py --help`.
+
+### 2. Batch Experiments (`run_experiment.py`)
+
+For systematic and reproducible research, `run_experiment.py` is the primary tool. It runs multiple trials, aggregates data, and supports advanced features.
+
+**Configuration:**
+Experiments are defined in a YAML file. See `example_config.yaml` for a template.
+
+**Standard Execution:**
+```bash
+python3 run_experiment.py --config example_config.yaml
 ```
 
-Example of a custom run:
+**High-Performance Parallel Execution:**
+To run trials in parallel across 4 CPU cores:
 ```bash
-python3 main.py --algorithm standard --fitness_func deceptive --generations 200 --output_file standard_vs_deceptive.png
+python3 run_experiment.py --config example_config.yaml --parallel 4
 ```
 
-### 2. Using a Configuration File for Batch Trials
+**Checkpointing and Resuming:**
+For long experiments, you can save progress and resume if interrupted.
 
-For more systematic and reproducible experiments, you can use the `run_experiment.py` script with a YAML configuration file. This script runs multiple trials for each defined experiment and aggregates the results, which is essential for scientific comparison.
+```bash
+# Run a long experiment, saving a checkpoint every 50 generations
+python3 run_experiment.py --config example_config.yaml --generations 500 --checkpoint_interval 50
 
-1.  **Edit the Configuration:** Modify the `example_config.yaml` file to define your experiment parameters.
-2.  **Run the Experiment:**
-    ```bash
-    python3 run_experiment.py --config example_config.yaml
-    ```
-    - **For high-performance execution**, use the `--parallel` flag to specify the number of CPU cores to use. For example, to use 4 cores:
-    ```bash
-    python3 run_experiment.py --config example_config.yaml --parallel 4
-    ```
-    *Note: You can still override any parameter from the config file by providing it as a command-line argument.*
-
-    - **For long-running experiments**, you can enable checkpointing to save progress. To resume an interrupted experiment, use the `--resume` flag.
-    ```bash
-    # Run a long experiment, saving a checkpoint every 50 generations
-    python3 run_experiment.py --generations 500 --checkpoint_interval 50
-
-    # If interrupted, resume from the last checkpoint
-    python3 run_experiment.py --generations 500 --checkpoint_interval 50 --resume
-    ```
+# If interrupted, resume from the last checkpoint
+python3 run_experiment.py --config example_config.yaml --generations 500 --resume
+```
 
 ## Output
 
 The framework produces two primary types of output:
 
-1.  **Visual Plots (`.png`):** Both `main.py` and `run_experiment.py` generate plots of the fitness over generations, which are useful for quick visual analysis.
-2.  **Structured Data (`.json`):** For rigorous analysis, `run_experiment.py` saves a complete record of the experiment to a JSON file (e.g., `experiment_results.json`). This file includes the full configuration and the aggregated fitness history, ensuring all results are reproducible and can be used for further study.
-
-## Results and Analysis
-
-To validate the effectiveness of the Epigenetic Genetic Algorithm (EGA), a comparative study was conducted against a Standard Genetic Algorithm (SGA) on a deceptive fitness function. The experiment was run for 20 trials, and the average performance was plotted.
-
-![Comparative Performance on the Deceptive Problem](final_comparison.png)
-
-### Analysis
-
-The results clearly demonstrate the EGA's superior performance in escaping the deceptive local optimum.
-
--   **Standard GA (SGA):** The SGA's performance quickly plateaus. It consistently gets trapped in the deceptive local optimum (a fitness score around 20), which rewards strings of all zeros. It lacks the mechanism to effectively explore the search space and discover the path to the global optimum.
--   **Epigenetic GA (EGA):** The EGA also initially explores the local optimum. However, its unique two-layered evolution allows it to maintain diversity and continue exploring. The rapidly mutating epigenome allows individuals to "test" new gene expressions without losing the underlying genetic material. This flexibility enables the EGA to eventually discover the global optimum (a fitness score of 40) and escape the deceptive trap where the SGA fails.
-
-This experiment provides strong evidence that the Epigenetic Genetic Algorithm is a more robust optimization technique for complex fitness landscapes with deceptive local optima.
-
-## Adaptive Intelligence: The AdaptiveEGA
-
-To further enhance the "High Tech" capabilities of this framework, an `AdaptiveEGA` was developed. This algorithm inherits from the standard `EGA` but introduces a layer of self-adapting intelligence.
-
-**Strategy:** The `AdaptiveEGA` monitors its own performance. If it detects that the search has stagnated (i.e., the best fitness has not improved for a set number of generations), it temporarily increases the `epigenome_mutation_rate`. This burst of exploration is designed to help the algorithm escape local optima.
-
-### Results and Analysis
-
-A new comparative study was conducted between the `AdaptiveEGA` and the standard `EGA`.
-
-![Comparative Performance of the AdaptiveEGA](adaptive_comparison.png)
-
-### Analysis
-
-The results show that while both algorithms initially get trapped in the local optimum, the **`AdaptiveEGA` is significantly more effective at escaping it**. The plot shows its best fitness making sharp jumps after periods of stagnation, which corresponds to the adaptive mutation rate kicking in and successfully finding a path toward the global optimum. This demonstrates the power of adding a simple, intelligent, self-adapting layer to an evolutionary algorithm.
-
----
-
-## Contributing
-
-Contributions to this framework are welcome. To ensure code quality and consistency, please adhere to the following guidelines:
-
-1.  **Code Style & Quality:** This project uses `black` for formatting and `flake8` for linting. Before submitting any changes, please ensure your code is formatted and passes all linter checks.
-2.  **Automated Checks (CI):** All pull requests and pushes are automatically checked by a GitHub Actions workflow. Your contribution must pass all checks (formatting, linting, and unit tests) before it can be merged.
-3.  **Extensibility:** When adding new components, please follow the existing architectural patterns (e.g., inherit from `BaseAlgorithm`, register components in `registry.py`).
+1.  **Visual Plots (`.png`):** Both runners generate plots of fitness over generations.
+2.  **Structured Data (`.json`):** `run_experiment.py` saves a complete record of the experiment, including the full configuration and aggregated results, to a JSON file (e.g., `experiment_results.json`).
 
 ## Framework Architecture
 
-This project is designed as a modular and extensible framework for evolutionary computation experiments. The core architectural principles are:
+The framework is designed for extensibility:
 
-1.  **Abstract Base Classes:** Core concepts are defined as abstract base classes (e.g., `BaseAlgorithm` in `framework.py`). This enforces a consistent interface and a set of rules that all concrete implementations must follow, ensuring architectural integrity.
-2.  **Component Registry:** A centralized registry (`registry.py`) is used for component discovery. Algorithms and fitness functions are "registered" with a unique name, decoupling the experiment runners from the implementations.
-3.  **Dynamic Loading:** The experiment runners (`main.py`, `run_experiment.py`) are data-driven. They use the registry to dynamically load the requested algorithm and fitness function by name from the command line, making them automatically compatible with any new component that gets registered.
+1.  **Abstract Base Classes:** `framework.py` defines `BaseAlgorithm`, an abstract class that enforces a consistent interface for all algorithms.
+2.  **Component Registry:** `registry.py` acts as a centralized discovery service. Algorithms and fitness functions are registered with a unique name.
+3.  **Dynamic Loading:** The runners (`main.py`, `run_experiment.py`) are data-driven. They use the registry to dynamically load components by name, making them automatically compatible with any new, registered component.
 
 ## Extending the Framework
 
-Adding your own custom components is straightforward.
+Adding new components is straightforward and does not require modifying the runners.
 
 ### How to Add a New Algorithm
 
-1.  **Create the Algorithm File:** Create a new Python file (e.g., `my_new_algorithm.py`).
-2.  **Implement the Algorithm Class:** Inside the file, create a class that inherits from `BaseAlgorithm` (from `framework.py`). You must implement all abstract methods:
-    - `__init__(self, **kwargs)`: Your constructor. It should accept `**kwargs` to be compatible with the argument parser.
-    - `evolve(self, fitness_function)`: The method that runs one generation of evolution.
-    - `get_fittest_individual(self)`: A method that returns the best individual found.
-    - `adapt_parameters(self)`: (Optional) This method is called once per generation and can be used to implement self-adapting logic.
-    *(See `dummy_algorithm.py` for a minimal example and `adaptive_ega.py` for a real one.)*
-3.  **Register the Algorithm:** Open `registry.py`, import your new class, and add a registration line:
-    ```python
-    from my_new_algorithm import MyNewAlgorithm
-    register_algorithm('my_new_algo', MyNewAlgorithm)
-    ```
+1.  **Create the Algorithm File:** Create a new Python file (e.g., `my_algorithm.py`).
+2.  **Implement the Algorithm Class:**
+    - Create a class that inherits from `BaseAlgorithm` (from `framework.py`).
+    - Implement all abstract methods: `__init__`, `evolve`, `get_fittest_individual`, `get_state`, and `set_state`.
+    - The `__init__` constructor must accept `**kwargs` to be compatible with the argument parser.
+    - Optionally, implement `adapt_parameters` for self-adapting logic.
+    *(See `dummy_algorithm.py` for a minimal example.)*
+3.  **Register the Algorithm:**
+    - Open `registry.py`.
+    - Import your new class (e.g., `from my_algorithm import MyAlgorithm`).
+    - Add a registration line inside `register_core_components()`:
+      ```python
+      register_algorithm('my_algo', MyAlgorithm)
+      ```
 
 ### How to Add a New Fitness Function
 
-1.  **Define the Function:** Add your new fitness function to `fitness_functions.py`.
-2.  **Register the Function:** Open `registry.py`, import your new function, and add a registration line:
-    ```python
-    from fitness_functions import my_new_fitness_func
-    register_fitness_function('my_func', my_new_fitness_func)
-    ```
+1.  **Define the Function:** Add your new fitness function to `fitness_functions.py`. It should accept a list of bits and return a number.
+2.  **Register the Function:**
+    - Open `registry.py`.
+    - Import your new function.
+    - Add a registration line:
+      ```python
+      register_fitness_function('my_func', my_fitness_function)
+      ```
 
-Your new components will now be automatically available to the experiment runners via the command line (e.g., `--algorithm my_new_algo`).
+Your new components are now available to the runners (e.g., via `--algorithm my_algo`).
+
+## Contributing
+
+Contributions are welcome. To ensure code quality and consistency, please follow these guidelines:
+
+1.  **Code Style:** This project uses `black` for formatting and `flake8` for linting. Run `black .` and `flake8` before committing.
+2.  **Automated Checks (CI):** All pull requests are automatically checked by a GitHub Actions workflow. Your contribution must pass all checks (formatting, linting, and unit tests).
+3.  **Architectural Patterns:** When adding new components, please adhere to the existing architecture (inherit from base classes, register components).
