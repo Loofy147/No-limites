@@ -55,7 +55,8 @@ class StandardAlgorithm(BaseAlgorithm):
         elitism_size,
         **kwargs,
     ):
-        self.population = StandardPopulation(population_size, individual_size)
+        self.population_size = population_size
+        self.population = StandardPopulation(self.population_size, individual_size)
         self.mutation_rate = mutation_rate
         self.crossover_rate = crossover_rate
         self.tournament_size = tournament_size
@@ -107,7 +108,7 @@ class StandardAlgorithm(BaseAlgorithm):
             new_population_individuals.extend(elites)
 
         # Create the rest of the new generation
-        for _ in range(len(self.population) - self.elitism_size):
+        for _ in range(self.population_size - self.elitism_size):
             parent1 = self._selection()
             parent2 = self._selection()
             child = self._crossover(parent1, parent2)
