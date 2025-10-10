@@ -77,6 +77,7 @@ class AdaptiveEGA(EpigeneticAlgorithm):
             "stagnation_counter": self.stagnation_counter,
             "best_fitness_so_far": self.best_fitness_so_far,
             "epigenome_mutation_rate": self.epigenome_mutation_rate,
+            "base_epigenome_mutation_rate": self.base_epigenome_mutation_rate,
         }
         return state
 
@@ -87,3 +88,7 @@ class AdaptiveEGA(EpigeneticAlgorithm):
         self.stagnation_counter = adaptive_state["stagnation_counter"]
         self.best_fitness_so_far = adaptive_state["best_fitness_so_far"]
         self.epigenome_mutation_rate = adaptive_state["epigenome_mutation_rate"]
+        # Restore the base rate, which is critical for correct adaptation
+        self.base_epigenome_mutation_rate = adaptive_state.get(
+            "base_epigenome_mutation_rate", self.epigenome_mutation_rate
+        )

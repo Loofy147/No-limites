@@ -65,6 +65,34 @@ class TestAdaptiveEGA(unittest.TestCase):
         self.assertEqual(self.algo.stagnation_counter, 0)
         self.assertEqual(self.algo.best_fitness_so_far, 25)
 
+    def test_checkpoint_restores_full_adaptive_state(self):
+        """
+        Test that checkpointing saves and restores all adaptive parameters,
+        including the base mutation rate.
+        """
+        # 1. Customize the initial algorithm state
+        self.algo.base_epigenome_mutation_rate = 0.1  # Custom base rate
+        self.algo.epigenome_mutation_rate = 0.2  # Simulate an adapted rate
+        self.algo.stagnation_counter = 3
+        self.algo.best_fitness_so_far = 99
+
+        # 2. Get the state from the original algorithm
+        state = self.algo.get_state()
+
+        # 3. Create a new algorithm instance and restore the state
+        new_algo = AdaptiveEGA(**self.base_args)
+        new_algo.set_state(state)
+
+        # 4. Assert that the full adaptive state was restored correctly
+        self.assertEqual(
+            new_algo.base_epigenome_mutation_rate,
+            0.1,
+            "The base mutation rate should be restored from the checkpoint.",
+        )
+        self.assertEqual(new_algo.epigenome_mutation_rate, 0.2)
+        self.assertEqual(new_algo.stagnation_counter, 3)
+        self.assertEqual(new_algo.best_fitness_so_far, 99)
+
 
 if __name__ == "__main__":
     unittest.main()
