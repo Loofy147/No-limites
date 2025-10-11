@@ -365,21 +365,29 @@ class RedTeamFitnessFunctionTests(unittest.TestCase):
     """Attack vector: Malicious or broken fitness functions"""
 
     def test_non_deterministic_fitness(self):
-        """RED TEAM: Fitness function returns different values"""
+        """RED TEAM: Fitness function should be detected by the framework"""
+        from ega import EpigeneticAlgorithm as EGA
         import random
 
         def malicious_fitness(genome):
             return random.random()
 
-        genome = [1, 0, 1, 0, 1]
-
-        results = [malicious_fitness(genome) for _ in range(10)]
-
-        # Should detect non-determinism
-        self.assertEqual(
-            len(set(results)), 1,
-            msg="Fitness function is non-deterministic"
+        algo = EGA(
+            population_size=10, individual_size=5, genotype_mutation_rate=0,
+            epigenome_mutation_rate=0, crossover_rate=0, tournament_size=2,
+            elitism_size=0, fitness_timeout=5
         )
+
+        # Force some individuals to be identical to trigger re-evaluation
+        # within the same generation, which should expose the non-determinism.
+        base_genotype = [0, 1, 0, 1, 0]
+        base_epigenome = [1, 1, 1, 1, 1]
+        for i in range(5):
+            algo.population.individuals[i].genotype = base_genotype
+            algo.population.individuals[i].epigenome = base_epigenome
+
+        with self.assertRaises(ValueError, msg="Framework should have detected non-deterministic fitness function"):
+            algo.evolve(malicious_fitness)
 
     def test_fitness_returning_invalid_types(self):
         """RED TEAM: Fitness function returns non-numeric values"""
@@ -412,22 +420,22 @@ class RedTeamFitnessFunctionTests(unittest.TestCase):
 
     def test_fitness_infinite_loop(self):
         """RED TEAM: Fitness function never returns"""
+        from ega import EpigeneticAlgorithm as EGA, Individual
+
         def infinite_fitness(genome):
             while True:
                 pass
 
-        import signal
+        algo = EGA(
+            population_size=1, individual_size=1, genotype_mutation_rate=0,
+            epigenome_mutation_rate=0, crossover_rate=0, tournament_size=1,
+            elitism_size=0, fitness_timeout=2  # 2-second timeout
+        )
 
-        def timeout_handler(signum, frame):
-            raise TimeoutError("Fitness function timed out")
-
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(2)  # 2 second timeout
+        individual = Individual(10)
 
         with self.assertRaises(TimeoutError):
-            infinite_fitness([1, 0, 1])
-
-        signal.alarm(0)  # Cancel alarm
+            algo._calculate_fitness(individual, infinite_fitness)
 
 
 # Test runner with detailed reporting
