@@ -15,9 +15,28 @@ from registry import ALGORITHMS, FITNESS_FUNCTIONS
 
 
 def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
-    """
-    Runs a single instance of a genetic algorithm for a set number of
-    generations. This function is designed to be called by a worker process.
+    """Runs a single trial of a genetic algorithm experiment.
+
+    This function is designed to be executed in a separate process. It handles
+    process-safe random seeding, component loading, and the main evolution
+    loop, including support for checkpointing and resuming.
+
+    Args:
+        trial_id (int): A unique identifier for the trial, used for seeding
+            and checkpoint naming.
+        algorithm_name (str): The registered name of the algorithm to run.
+        fitness_function_name (str): The registered name of the fitness
+            function to use.
+        args (argparse.Namespace): An object containing the experiment's
+            configuration parameters.
+
+    Returns:
+        list[tuple[float, float]]: The fitness history for the trial, where
+        each element is a tuple of (best_fitness, average_fitness).
+
+    Raises:
+        ValueError: If a component is not found in the registry or if a
+            critical parameter mismatches when resuming from a checkpoint.
     """
     # --- Process-Safe Seeding ---
     # Ensure each parallel trial has a unique random seed by combining
@@ -108,8 +127,16 @@ def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
 
 
 def main(args):
-    """
-    Main function to run and manage experiments.
+    """Main function to run and manage comparative experiments.
+
+    This function orchestrates a series of experiments as defined in the
+    `experiments` list. It runs multiple trials for each experiment,
+    handles parallel execution, aggregates the results, plots a comparative
+    graph, and saves the structured results to a JSON file.
+
+    Args:
+        args (argparse.Namespace): An object containing the parsed
+            command-line arguments and configuration from the YAML file.
     """
     print("--- Starting Comparative Experiment ---")
     print(f"Running {args.trials} trials for each setup...")
@@ -178,12 +205,12 @@ def main(args):
 
 
 def plot_comparative_history(results, title, output_file):
-    """
-    Plots the best and average fitness for multiple experimental runs.
+    """Plots and saves a comparative graph of aggregated fitness histories.
 
     Args:
-        results (list): A list of tuples, where each tuple is
-                        (label, aggregated_fitness_history).
+        results (list[tuple[str, list[tuple[float, float]]]]): A list of
+            tuples, where each tuple contains a label for an experiment and
+            its aggregated fitness history (mean over trials).
         title (str): The title for the plot.
         output_file (str): The filename to save the plot to.
     """

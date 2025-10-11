@@ -13,14 +13,37 @@ FITNESS_FUNCTIONS = {}
 
 
 def register_algorithm(name, cls):
-    """Registers an algorithm class with the framework."""
+    """Registers an algorithm class with the framework.
+
+    This function makes an algorithm available to the experiment runners
+    under a unique identifier name.
+
+    Args:
+        name (str): The unique name to identify the algorithm.
+        cls (class): The algorithm class (must inherit from `BaseAlgorithm`).
+
+    Raises:
+        ValueError: If an algorithm with the same name is already registered.
+    """
     if name in ALGORITHMS:
         raise ValueError(f"Algorithm '{name}' is already registered.")
     ALGORITHMS[name] = cls
 
 
 def register_fitness_function(name, func):
-    """Registers a fitness function with the framework."""
+    """Registers a fitness function with the framework.
+
+    This function makes a fitness function available to the experiment
+    runners under a unique identifier name.
+
+    Args:
+        name (str): The unique name to identify the fitness function.
+        func (callable): The fitness function.
+
+    Raises:
+        ValueError: If a fitness function with the same name is already
+            registered.
+    """
     if name in FITNESS_FUNCTIONS:
         raise ValueError(f"Fitness function '{name}' is already registered.")
     FITNESS_FUNCTIONS[name] = func
@@ -30,9 +53,11 @@ def register_fitness_function(name, func):
 
 
 def register_core_components():
-    """
-    A convenience function to register all the standard components
-    that ship with the framework.
+    """Registers all the standard components that ship with the framework.
+
+    This function is called automatically when the module is imported,
+    ensuring that all built-in algorithms and fitness functions are
+    ready to be used by the runners.
     """
     # Register algorithms
     register_algorithm("ega", EpigeneticAlgorithm)
