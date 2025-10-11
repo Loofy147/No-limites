@@ -12,6 +12,8 @@ FITNESS_FUNCTIONS = {}
 # --- Registration Functions ---
 
 
+import re
+
 def register_algorithm(name, cls):
     """Registers an algorithm class with the framework.
 
@@ -19,12 +21,19 @@ def register_algorithm(name, cls):
     under a unique identifier name.
 
     Args:
-        name (str): The unique name to identify the algorithm.
+        name (str): The unique name to identify the algorithm. Must be a
+            valid identifier (alphanumeric characters and underscores).
         cls (class): The algorithm class (must inherit from `BaseAlgorithm`).
 
     Raises:
-        ValueError: If an algorithm with the same name is already registered.
+        ValueError: If the name is not a valid identifier or if an algorithm
+            with the same name is already registered.
     """
+    if not re.match(r"^[a-zA-Z0-9_]+$", name):
+        raise ValueError(
+            f"Invalid algorithm name: '{name}'. "
+            "Name must be alphanumeric with underscores."
+        )
     if name in ALGORITHMS:
         raise ValueError(f"Algorithm '{name}' is already registered.")
     ALGORITHMS[name] = cls

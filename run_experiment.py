@@ -14,33 +14,33 @@ import yaml
 from registry import ALGORITHMS, FITNESS_FUNCTIONS
 
 
+def load_checkpoint(filename):
+    """Loads a checkpoint from a JSON file."""
+    with open(filename, "r") as f:
+        return json.load(f)
+
+
+def validate_checkpoint(state):
+    """Validates the structure and types of the loaded checkpoint state."""
+    required_keys = {
+        "generation": int,
+        "algorithm_state": dict,
+    }
+    for key, expected_type in required_keys.items():
+        if key not in state:
+            raise ValueError(f"Checkpoint is missing required key: '{key}'")
+        if not isinstance(state[key], expected_type):
+            raise TypeError(
+                f"Checkpoint key '{key}' has wrong type: "
+                f"expected {expected_type}, got {type(state[key])}"
+            )
+    if state["generation"] < 0:
+        raise ValueError("Checkpoint generation cannot be negative.")
+    return True
+
+
 def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
-    """Runs a single trial of a genetic algorithm experiment.
-
-    This function is designed to be executed in a separate process. It handles
-    process-safe random seeding, component loading, and the main evolution
-    loop, including support for checkpointing and resuming.
-
-    Args:
-        trial_id (int): A unique identifier for the trial, used for seeding
-            and checkpoint naming.
-        algorithm_name (str): The registered name of the algorithm to run.
-        fitness_function_name (str): The registered name of the fitness
-            function to use.
-        args (argparse.Namespace): An object containing the experiment's
-            configuration parameters.
-
-    Returns:
-        list[tuple[float, float]]: The fitness history for the trial, where
-        each element is a tuple of (best_fitness, average_fitness).
-
-    Raises:
-        ValueError: If a component is not found in the registry or if a
-            critical parameter mismatches when resuming from a checkpoint.
-    """
-    # --- Process-Safe Seeding ---
-    # Ensure each parallel trial has a unique random seed by combining
-    # the time, its own process ID, and the trial ID.
+    """Runs a single trial of a genetic algorithm experiment."""
     seed = int(time.time()) + os.getpid() + trial_id
     random.seed(seed)
     np.random.seed(seed)
@@ -52,71 +52,58 @@ def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
     except KeyError as e:
         raise ValueError(f"Component not found in registry: {e}")
 
-    # Pass all argparse arguments to the constructor.
     algorithm = algorithm_class(**vars(args))
-
     start_generation = 0
     fitness_history = []
 
-    # --- Resuming Logic ---
     checkpoint_filename = (
-        f"checkpoint_{algorithm_name}_{fitness_function_name}_trial_{trial_id}.pkl"
+        f"checkpoint_{algorithm_name}_{fitness_function_name}_trial_{trial_id}.json"
     )
     if args.resume and os.path.exists(checkpoint_filename):
         print(f"    Resuming from checkpoint: {checkpoint_filename}")
-        with open(checkpoint_filename, "rb") as f:
-            state = pickle.load(f)
+        state = load_checkpoint(checkpoint_filename)
+        validate_checkpoint(state)
 
         # --- Parameter Validation for Resume ---
-        # Ensure the resumed experiment is consistent with the original.
-        original_args = state["args"]
+        original_args_dict = state["args"]
         critical_params = [
-            "population_size",
-            "individual_size",
-            "genotype_mutation_rate",
-            "epigenome_mutation_rate",
-            "mutation_rate",
-            "crossover_rate",
-            "tournament_size",
-            "elitism_size",
-            "stagnation_limit",
+            "population_size", "individual_size", "genotype_mutation_rate",
+            "epigenome_mutation_rate", "mutation_rate", "crossover_rate",
+            "tournament_size", "elitism_size", "stagnation_limit",
             "adaptation_factor",
         ]
         for param in critical_params:
-            if hasattr(original_args, param) and hasattr(args, param):
-                original_val = getattr(original_args, param)
+            if param in original_args_dict and hasattr(args, param):
+                original_val = original_args_dict[param]
                 current_val = getattr(args, param)
                 if original_val != current_val:
                     raise ValueError(
                         f"Mismatched critical parameter '{param}' on resume. "
                         f"Checkpoint had {original_val}, but current run has "
-                        f"{current_val}. Aborting to prevent invalid results."
+                        f"{current_val}."
                     )
 
         algorithm.set_state(state["algorithm_state"])
         start_generation = state["generation"]
         fitness_history = state["fitness_history"]
 
-    # --- Evolution Loop with Checkpointing ---
     for generation in range(start_generation, args.generations):
         best_fitness, avg_fitness = algorithm.evolve(fitness_function)
         fitness_history.append((best_fitness, avg_fitness))
 
-        # Check if we should save a checkpoint
         if (
             args.checkpoint_interval > 0
             and (generation + 1) % args.checkpoint_interval == 0
         ):
-            # Use the same unique filename for saving
             state = {
                 "trial_id": trial_id,
                 "generation": generation + 1,
                 "algorithm_state": algorithm.get_state(),
                 "fitness_history": fitness_history,
-                "args": args,
+                "args": vars(args),
             }
-            with open(checkpoint_filename, "wb") as f:
-                pickle.dump(state, f)
+            with open(checkpoint_filename, "w") as f:
+                json.dump(state, f, indent=4)
             print(
                 f"    ... Saved checkpoint for Trial {trial_id + 1} at "
                 f"generation {generation + 1}"
@@ -124,6 +111,36 @@ def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
 
     print(f"  Finished Trial {trial_id + 1}.")
     return fitness_history
+
+
+def validate_config(args):
+    """Validates configuration parameters to prevent resource exhaustion.
+
+    Args:
+        args (argparse.Namespace): Parsed command-line arguments.
+
+    Raises:
+        ValueError: If a parameter is outside its acceptable range.
+    """
+    MAX_POPULATION_SIZE = 10**6  # Set a reasonable limit
+    if not 0 < args.population_size <= MAX_POPULATION_SIZE:
+        raise ValueError(
+            f"Population size must be between 1 and {MAX_POPULATION_SIZE}."
+        )
+
+    if args.individual_size <= 0:
+        raise ValueError("Individual size must be positive.")
+    if args.generations <= 0:
+        raise ValueError("Number of generations must be positive.")
+    if not 0 <= args.genotype_mutation_rate <= 1:
+        raise ValueError("Genotype mutation rate must be between 0 and 1.")
+    if not 0 <= args.epigenome_mutation_rate <= 1:
+        raise ValueError("Epigenome mutation rate must be between 0 and 1.")
+    if args.parallel > mp.cpu_count():
+        print(
+            f"Warning: Number of parallel workers ({args.parallel}) "
+            f"exceeds CPU count ({mp.cpu_count()})."
+        )
 
 
 def main(args):
@@ -138,6 +155,8 @@ def main(args):
         args (argparse.Namespace): An object containing the parsed
             command-line arguments and configuration from the YAML file.
     """
+    validate_config(args)  # Validate the configuration first
+
     print("--- Starting Comparative Experiment ---")
     print(f"Running {args.trials} trials for each setup...")
 
