@@ -378,6 +378,12 @@ if __name__ == "__main__":
         default="experiment_results.json",
         help="File to save the structured results to.",
     )
+    parser.add_argument(
+        "--fitness_timeout",
+        type=int,
+        default=10,
+        help="Timeout in seconds for a single fitness function evaluation.",
+    )
 
     # Set defaults from config file, then parse the remaining args
     parser.set_defaults(**config)

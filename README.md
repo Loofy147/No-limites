@@ -12,6 +12,15 @@ This project provides a modular and extensible framework for developing and anal
 - **Configuration Driven:** Experiments can be defined in YAML files for reproducibility and easy modification.
 - **Automated Quality Checks:** Integrated with GitHub Actions for continuous integration (CI) to ensure code quality using `black`, `flake8`, and `unittest`.
 
+## Security and Hardening
+
+The framework has been hardened against common vulnerabilities to ensure robust and secure operation, particularly when running with custom or untrusted configurations.
+
+-   **Secure Checkpointing:** The checkpointing system uses **JSON** instead of `pickle`. This prevents arbitrary code execution vulnerabilities when loading checkpoint files from untrusted sources.
+-   **Configuration Validation:** Before an experiment begins, a validation step (`validate_config`) checks for potentially harmful or invalid parameters. This mitigates resource exhaustion attacks, such as specifying an excessively large population size or negative values.
+-   **Checkpoint Integrity:** Checkpoints are validated upon loading to ensure they have the correct data structure and types, preventing crashes or undefined behavior from corrupted files.
+-   **Hardened Component Registry:** The component registry validates the names of algorithms and fitness functions to prevent injection of malicious or malformed strings.
+
 ## The Epigenetic Concept
 
 Traditional Genetic Algorithms (GAs) can suffer from premature convergence, where a population loses the genetic diversity needed to find a global optimum. The EGA introduces a dual-layered genetic system to address this:

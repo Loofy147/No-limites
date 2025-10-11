@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from framework import BaseAlgorithm
+import multiprocessing as mp
 
 
 class Individual:
@@ -147,39 +148,54 @@ class EpigeneticAlgorithm(BaseAlgorithm):
         crossover_rate,
         tournament_size,
         elitism_size,
+        fitness_timeout=10,  # Add timeout parameter
         **kwargs,
     ):
-        """Initializes the Epigenetic Genetic Algorithm.
-
-        Args:
-            population_size (int): The number of individuals in the population.
-            individual_size (int): The size of the genome.
-            genotype_mutation_rate (float): The mutation rate for the genotype.
-            epigenome_mutation_rate (float): The mutation rate for the
-                epigenome.
-            crossover_rate (float): The rate at which to perform crossover.
-            tournament_size (int): The number of individuals to select for a
-                tournament.
-            elitism_size (int): The number of fittest individuals to carry over
-                to the next generation.
-            **kwargs: Catches any unused arguments passed from the runner.
-        """
+        """Initializes the Epigenetic Genetic Algorithm."""
         self.population = Population(population_size, individual_size)
         self.genotype_mutation_rate = genotype_mutation_rate
         self.epigenome_mutation_rate = epigenome_mutation_rate
         self.crossover_rate = crossover_rate
         self.tournament_size = tournament_size
         self.elitism_size = elitism_size
+        self.fitness_timeout = fitness_timeout
 
     def _calculate_fitness(self, individual, fitness_function):
-        """Calculates and sets the fitness for a single individual.
+        """Calculates and sets the fitness for a single individual with a cross-platform timeout."""
 
-        Args:
-            individual (Individual): The individual to evaluate.
-            fitness_function (callable): The function to score the phenotype.
-        """
+        # Helper function to run in a separate process
+        def fitness_worker(phenotype, func, queue):
+            try:
+                result = func(phenotype)
+                queue.put(result)
+            except Exception as e:
+                queue.put(e)
+
         phenotype = individual.calculate_phenotype()
-        fitness = fitness_function(phenotype)
+
+        if self.fitness_timeout <= 0:
+            # Run without a timeout
+            fitness = fitness_function(phenotype)
+        else:
+            # Run with a timeout in a separate process
+            q = mp.Queue()
+            p = mp.Process(target=fitness_worker, args=(phenotype, fitness_function, q))
+            p.start()
+            p.join(self.fitness_timeout)
+
+            if p.is_alive():
+                p.terminate()
+                p.join()
+                raise TimeoutError("Fitness function evaluation timed out.")
+
+            if q.empty():
+                raise RuntimeError("Fitness function process finished but returned no result.")
+
+            result = q.get()
+            if isinstance(result, Exception):
+                raise result  # Re-raise exception from the child process
+            fitness = result
+
         if not isinstance(fitness, (int, float)):
             raise TypeError(
                 f"Fitness function must return a number, but got {type(fitness)}"
@@ -249,33 +265,30 @@ class EpigeneticAlgorithm(BaseAlgorithm):
                 individual.epigenome[i] = 1 - individual.epigenome[i]
 
     def evolve(self, fitness_function):
-        """Performs one full cycle of evolution.
-
-        The process includes:
-        1. Optional parameter adaptation.
-        2. Fitness calculation for the current population.
-        3. Elitism to preserve the best individuals.
-        4. Creation of a new generation through selection, crossover, and
-           mutation.
-        5. Fitness calculation for the new generation.
-
-        Args:
-            fitness_function (callable): The function to evaluate fitness.
-
-        Returns:
-            tuple: A tuple containing the best fitness and the average fitness
-                   of the new generation.
-        """
-        # Allow the algorithm to adapt its own parameters
+        """Performs one full cycle of evolution."""
         self.adapt_parameters()
 
-        # Calculate fitness for the current population to prepare for selection
+        # Use a cache to detect non-deterministic fitness functions within this generation
+        fitness_cache = {}
+
+        # --- Fitness Calculation for Current Population ---
         for ind in self.population.individuals:
+            phenotype = tuple(ind.calculate_phenotype())
+
+            # Calculate the fitness
             self._calculate_fitness(ind, fitness_function)
 
+            # Check against cache
+            if phenotype in fitness_cache:
+                if fitness_cache[phenotype] != ind.fitness:
+                    raise ValueError("Non-deterministic fitness function detected!")
+            else:
+                fitness_cache[phenotype] = ind.fitness
+
+        # --- Create New Generation ---
         new_population_individuals = []
 
-        # Apply elitism: carry over the best individuals
+        # Apply elitism
         if self.elitism_size > 0:
             sorted_population = sorted(
                 self.population.individuals, key=lambda ind: ind.fitness, reverse=True
