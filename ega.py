@@ -51,6 +51,23 @@ class Individual:
             f"Fitness:   {self.fitness}"
         )
 
+    def to_dict(self):
+        """Returns a dictionary representation of the individual."""
+        return {
+            "genotype": self.genotype,
+            "epigenome": self.epigenome,
+            "fitness": self.fitness,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Creates an Individual from a dictionary representation."""
+        ind = cls(len(data["genotype"]))
+        ind.genotype = data["genotype"]
+        ind.epigenome = data["epigenome"]
+        ind.fitness = data["fitness"]
+        return ind
+
 
 class Population:
     """Represents a collection of `Individual` objects.
@@ -86,6 +103,19 @@ class Population:
     def __getitem__(self, index):
         """Allows accessing individuals in the population by index."""
         return self.individuals[index]
+
+    def to_dict(self):
+        """Returns a dictionary representation of the population."""
+        return {"individuals": [ind.to_dict() for ind in self.individuals]}
+
+    @classmethod
+    def from_dict(cls, data):
+        """Creates a Population from a dictionary representation."""
+        pop = cls(0, 0)  # Dummy initialization
+        pop.individuals = [
+            Individual.from_dict(ind_data) for ind_data in data["individuals"]
+        ]
+        return pop
 
 
 class EpigeneticAlgorithm(BaseAlgorithm):
@@ -149,7 +179,12 @@ class EpigeneticAlgorithm(BaseAlgorithm):
             fitness_function (callable): The function to score the phenotype.
         """
         phenotype = individual.calculate_phenotype()
-        individual.fitness = fitness_function(phenotype)
+        fitness = fitness_function(phenotype)
+        if not isinstance(fitness, (int, float)):
+            raise TypeError(
+                f"Fitness function must return a number, but got {type(fitness)}"
+            )
+        individual.fitness = fitness
 
     def _selection(self):
         """Selects an individual using tournament selection.
@@ -277,7 +312,7 @@ class EpigeneticAlgorithm(BaseAlgorithm):
     def get_state(self):
         """Returns the current state of the algorithm for checkpointing."""
         return {
-            "population": self.population,
+            "population": self.population.to_dict(),
             "random_state": random.getstate(),
             "numpy_random_state": np.random.get_state(),
         }
@@ -288,6 +323,6 @@ class EpigeneticAlgorithm(BaseAlgorithm):
         Args:
             state (dict): The state dictionary to restore.
         """
-        self.population = state["population"]
+        self.population = Population.from_dict(state["population"])
         random.setstate(state["random_state"])
         np.random.set_state(state["numpy_random_state"])
