@@ -4,16 +4,20 @@ from registry import ALGORITHMS, FITNESS_FUNCTIONS
 
 
 def plot_fitness_history(results, title, output_file="fitness_plot.png"):
-    """Plots the best and average fitness over generations and saves to a file.
+    """Plots the best and average fitness over generations and saves the plot.
+
+    This function generates a plot visualizing the performance of one or more
+    evolutionary algorithm runs. It plots the best fitness and average fitness
+    per generation, making it easy to see the progress of the search.
 
     Args:
-        results (list[tuple[str, list[tuple[float, float]]]]): A list of
-            tuples, where each tuple contains a label for the run and its
-            corresponding fitness history. The fitness history is a list of
-            tuples, each containing the best and average fitness for a
+        results (list[tuple[str, list[tuple[float, float]]]]): A list where
+            each item is a tuple containing a label for the run (e.g.,
+            "EGA") and its corresponding fitness history. The history is a
+            list of (best_fitness, average_fitness) tuples for each
             generation.
-        title (str): The title for the plot.
-        output_file (str, optional): The filename to save the plot to.
+        title (str): The title to display on the plot.
+        output_file (str, optional): The path to save the generated plot image.
             Defaults to "fitness_plot.png".
     """
     plt.figure(figsize=(12, 6))

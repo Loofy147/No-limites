@@ -1,6 +1,6 @@
 # Epigenetic Genetic Algorithm (EGA) Framework
 
-This project provides a modular and extensible framework for developing and analyzing evolutionary algorithms, centered around a novel **Epigenetic Genetic Algorithm (EGA)**. It is designed for researchers and developers to experiment with advanced genetic algorithms, compare their performance, and extend the framework with new components.
+This project provides a modular and extensible framework for developing and analyzing evolutionary algorithms, with a primary focus on a novel **Epigenetic Genetic Algorithm (EGA)**. The purpose of this repository is to offer a robust, secure, and easy-to-use platform for researchers and developers to experiment with advanced genetic algorithms, conduct comparative analyses, and extend the framework with new components.
 
 ## Key Features
 
@@ -52,58 +52,70 @@ pip install -r requirements-dev.txt
 
 ## How to Run Experiments
 
-There are two primary ways to run experiments:
+There are two primary ways to run experiments, each designed for a different use case.
 
 ### 1. Single Run (`main.py`)
 
-The `main.py` script is ideal for quick, single-run experiments.
+The `main.py` script is ideal for quick, single-run experiments to test a specific algorithm and fitness function combination. All hyperparameters are controlled via command-line arguments.
 
 **Default Run (EGA on One-Max):**
+A simple execution with no arguments will run the default configuration.
 ```bash
 python3 main.py
 ```
 
 **Custom Run (Standard GA on Deceptive Problem):**
+You can easily switch algorithms, fitness functions, and other parameters.
 ```bash
 python3 main.py --algorithm standard --fitness_func deceptive --generations 200
 ```
-For a full list of configurable parameters, run `python3 main.py --help`.
+For a full list of all configurable parameters, use the `--help` flag:
+```bash
+python3 main.py --help
+```
 
 ### 2. Batch Experiments (`run_experiment.py`)
 
-For systematic and reproducible research, `run_experiment.py` is the primary tool. It runs multiple trials, aggregates data, and supports advanced features.
+For systematic and reproducible research, `run_experiment.py` is the primary tool. It runs multiple trials for each experimental setup, aggregates data, and supports advanced features like parallel execution and checkpointing.
 
-**Configuration:**
-Experiments are defined in a YAML file. See `example_config.yaml` for a template.
+**Configuration via YAML:**
+Experiments are defined in a YAML file, which makes them easy to manage and version control. Command-line arguments can override settings in the YAML file. See `example_config.yaml` for a complete template.
 
 **Standard Execution:**
+To run the experiments defined in a configuration file:
 ```bash
 python3 run_experiment.py --config example_config.yaml
 ```
 
 **High-Performance Parallel Execution:**
-To run trials in parallel across 4 CPU cores:
+To accelerate research, you can run the trials for each experiment in parallel across multiple CPU cores.
 ```bash
 python3 run_experiment.py --config example_config.yaml --parallel 4
 ```
 
 **Checkpointing and Resuming:**
-For long experiments, you can save progress and resume if interrupted.
+For long-running experiments, the framework can save its state periodically. If the run is interrupted, it can be resumed from the last saved checkpoint, preventing loss of progress.
 
 ```bash
 # Run a long experiment, saving a checkpoint every 50 generations
 python3 run_experiment.py --config example_config.yaml --generations 500 --checkpoint_interval 50
 
-# If interrupted, resume from the last checkpoint
+# If interrupted, resume from the last saved checkpoint
 python3 run_experiment.py --config example_config.yaml --generations 500 --resume
 ```
 
-## Output
+## Understanding the Output
 
-The framework produces two primary types of output:
+The framework produces two primary types of output, giving you both a quick visual summary and a detailed, reproducible record.
 
-1.  **Visual Plots (`.png`):** Both runners generate plots of fitness over generations.
-2.  **Structured Data (`.json`):** `run_experiment.py` saves a complete record of the experiment, including the full configuration and aggregated results, to a JSON file (e.g., `experiment_results.json`).
+1.  **Visual Plots (`.png`):**
+    -   `main.py` generates a plot (`fitness_plot.png`) showing the best and average fitness for each generation of its single run.
+    -   `run_experiment.py` generates a comparative plot (`comparative_plot.png`) that shows the mean best and average fitness across all trials for each experiment, allowing for easy performance comparison.
+
+2.  **Structured Data (`.json`):**
+    -   `run_experiment.py` saves a complete record of the experiment to `experiment_results.json`. This file is crucial for reproducibility and contains:
+        -   The full configuration used for the run, including all hyperparameters.
+        -   The aggregated fitness history (mean best and average fitness) for each experiment.
 
 ## Framework Architecture
 

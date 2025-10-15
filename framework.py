@@ -2,16 +2,13 @@ from abc import ABC, abstractmethod
 
 
 class BaseAlgorithm(ABC):
-    """An abstract base class for all genetic algorithms in the framework.
+    """An abstract base class for all evolutionary algorithms in the framework.
 
-    This class defines the required interface that all concrete algorithm
-    implementations must follow, ensuring a consistent structure for
-    initialization, evolution, and state management. Any new algorithm
-    added to the framework must inherit from this class and implement
-    all its abstract methods.
-
-    Attributes:
-        None
+    This class defines the essential interface that all concrete algorithm
+    implementations must adhere to. It ensures a consistent structure for
+    initialization, evolution, state management for checkpointing, and hooks
+    for adaptive behaviors. Any new algorithm added to the framework must
+    inherit from this class and implement all of its abstract methods.
     """
 
     @abstractmethod
@@ -83,12 +80,14 @@ class BaseAlgorithm(ABC):
         pass
 
     def adapt_parameters(self):
-        """An optional hook for self-adapting algorithms.
+        """An optional hook for implementing self-adapting algorithm behavior.
 
-        This method is called once per generation before the main `evolve`
-        logic. It provides a structured way for algorithms to dynamically
-        adjust their own hyperparameters (e.g., mutation rate) based on
-        the state of the search. Implementations that do not need this
-        functionality can simply leave it empty.
+        This method is called once per generation, just before the main `evolve`
+        logic. It provides a designated place for algorithms to dynamically
+        adjust their own hyperparameters (such as mutation rates or crossover
+        strategies) based on the current state of the search.
+
+        Algorithms that do not require self-adaptation can simply provide an
+        empty implementation.
         """
         pass
