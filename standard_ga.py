@@ -6,10 +6,12 @@ from framework import BaseAlgorithm
 class StandardIndividual:
     """Represents an individual in a standard Genetic Algorithm.
 
-    It has a single genotype that directly represents its phenotype.
+    This is a simpler representation compared to the EGA's Individual, as it
+    only has a single genotype that directly corresponds to its phenotype.
 
     Attributes:
-        genotype (list[int]): The genetic code of the individual.
+        genotype (list[int]): The genetic code of the individual, which is
+            also its phenotype.
         fitness (float): The fitness score of the individual.
     """
 
@@ -31,10 +33,13 @@ class StandardIndividual:
 
 
 class StandardPopulation:
-    """Represents a collection of `StandardIndividual` objects.
+    """Manages a collection of `StandardIndividual` objects.
+
+    This class provides a container for the individuals in the population
+    and includes helper methods for accessing them.
 
     Attributes:
-        individuals (list[StandardIndividual]): A list of individuals.
+        individuals (list[StandardIndividual]): The list of individuals.
     """
 
     def __init__(self, population_size, individual_size):
@@ -49,10 +54,10 @@ class StandardPopulation:
         ]
 
     def get_fittest(self):
-        """Returns the individual with the highest fitness in the population.
+        """Finds and returns the individual with the highest fitness score.
 
         Returns:
-            StandardIndividual: The fittest individual.
+            StandardIndividual: The individual with the highest fitness score.
         """
         return max(self.individuals, key=lambda ind: ind.fitness)
 
@@ -96,12 +101,16 @@ class StandardAlgorithm(BaseAlgorithm):
 
         Args:
             population_size (int): The number of individuals in the population.
-            individual_size (int): The size of the genome.
-            mutation_rate (float): The mutation rate for the genotype.
-            crossover_rate (float): The rate at which to perform crossover.
-            tournament_size (int): The size of the selection tournament.
-            elitism_size (int): The number of elite individuals to carry over.
-            **kwargs: Catches any unused arguments.
+            individual_size (int): The size of the individual genome.
+            mutation_rate (float): The probability of a bit flip mutation in
+                the genotype.
+            crossover_rate (float): The probability that crossover will occur
+                between two parents.
+            tournament_size (int): The number of individuals to select for a
+                selection tournament.
+            elitism_size (int): The number of the fittest individuals to
+                carry over to the next generation without modification.
+            **kwargs: Catches any unused arguments passed in from the runners.
         """
         self.population_size = population_size
         self.population = StandardPopulation(self.population_size, individual_size)
@@ -121,23 +130,32 @@ class StandardAlgorithm(BaseAlgorithm):
         individual.fitness = fitness_function(individual.genotype)
 
     def _selection(self):
-        """Selects an individual using tournament selection.
+        """Selects a parent from the population using tournament selection.
+
+        A random subset of the population of size `tournament_size` is chosen,
+        and the individual with the highest fitness from this subset is
+        selected as a parent.
 
         Returns:
-            StandardIndividual: The selected individual.
+            StandardIndividual: The selected parent individual.
         """
         tournament = random.sample(self.population.individuals, self.tournament_size)
         return max(tournament, key=lambda ind: ind.fitness)
 
     def _crossover(self, parent1, parent2):
-        """Performs single-point crossover on two parents.
+        """Performs single-point crossover on the genotype of two parents.
+
+        If a random draw is below the `crossover_rate`, a single crossover
+        point is chosen. The child inherits the first part of its genotype
+        from `parent1` and the second part from `parent2`. Otherwise, the child
+        is a direct clone of `parent1`.
 
         Args:
             parent1 (StandardIndividual): The first parent.
             parent2 (StandardIndividual): The second parent.
 
         Returns:
-            StandardIndividual: The resulting child.
+            StandardIndividual: A new child individual.
         """
         child = StandardIndividual(len(parent1.genotype))
         if random.random() < self.crossover_rate:
@@ -160,13 +178,19 @@ class StandardAlgorithm(BaseAlgorithm):
                 individual.genotype[i] = 1 - individual.genotype[i]
 
     def evolve(self, fitness_function):
-        """Performs one full cycle of evolution.
+        """Performs one full generation of the standard Genetic Algorithm.
+
+        This method orchestrates the main evolutionary loop: fitness
+        calculation, selection, crossover, mutation, and the creation of a
+        new generation.
 
         Args:
-            fitness_function (callable): The function to evaluate fitness.
+            fitness_function (callable): The function used to evaluate the
+                fitness of each individual's genotype.
 
         Returns:
-            tuple: Best and average fitness of the new generation.
+            tuple[float, float]: A tuple containing the best and average
+            fitness scores of the new generation.
         """
         # Allow the algorithm to adapt its own parameters
         self.adapt_parameters()
@@ -211,7 +235,20 @@ class StandardAlgorithm(BaseAlgorithm):
         return self.population.get_fittest()
 
     def get_state(self):
-        """Returns the current state of the algorithm for checkpointing."""
+        """Serializes the current state of the algorithm for checkpointing.
+
+        This method captures the full state of the algorithm, including the
+        population and the states of the random number generators, allowing
+        for a complete and accurate resume.
+
+        Returns:
+            dict: A dictionary representing the current state, with the
+            following structure:
+            - 'population' (StandardPopulation): The current population object.
+            - 'random_state' (tuple): The state of Python's `random` module.
+            - 'numpy_random_state' (dict): The state of NumPy's random
+              number generator.
+        """
         return {
             "population": self.population,
             "random_state": random.getstate(),
@@ -222,7 +259,9 @@ class StandardAlgorithm(BaseAlgorithm):
         """Restores the algorithm's state from a checkpoint.
 
         Args:
-            state (dict): The state dictionary to restore.
+            state (dict): A dictionary, as returned by `get_state()`,
+                representing the state to restore. It must contain keys
+                for 'population', 'random_state', and 'numpy_random_state'.
         """
         self.population = state["population"]
         random.setstate(state["random_state"])

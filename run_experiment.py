@@ -15,13 +15,37 @@ from registry import ALGORITHMS, FITNESS_FUNCTIONS
 
 
 def load_checkpoint(filename):
-    """Loads a checkpoint from a JSON file."""
+    """Loads a checkpoint state from a JSON file.
+
+    Args:
+        filename (str): The path to the checkpoint file.
+
+    Returns:
+        dict: The loaded checkpoint state.
+    """
     with open(filename, "r") as f:
         return json.load(f)
 
 
 def validate_checkpoint(state):
-    """Validates the structure and types of the loaded checkpoint state."""
+    """Validates the structure and types of a loaded checkpoint state.
+
+    This function provides a basic but crucial integrity check to ensure that a
+    loaded checkpoint has the expected keys and data types before the system
+    attempts to use it. This helps prevent crashes from corrupted or malformed
+    checkpoint files.
+
+    Args:
+        state (dict): The checkpoint state dictionary to validate.
+
+    Returns:
+        bool: True if the validation succeeds.
+
+    Raises:
+        ValueError: If a required key is missing or if the generation
+            number is negative.
+        TypeError: If a key has an unexpected data type.
+    """
     required_keys = {
         "generation": int,
         "algorithm_state": dict,
@@ -40,7 +64,27 @@ def validate_checkpoint(state):
 
 
 def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
-    """Runs a single trial of a genetic algorithm experiment."""
+    """Runs one complete trial of a genetic algorithm experiment.
+
+    This function is designed to be a self-contained unit of work that can be
+    executed in parallel. It handles everything from seeding the random number
+    generators to initializing the algorithm, running the evolution loop, and
+    managing checkpoints.
+
+    Args:
+        trial_id (int): A unique identifier for the trial, used for seeding
+            and naming checkpoint files.
+        algorithm_name (str): The name of the algorithm to run, as registered
+            in the component registry.
+        fitness_function_name (str): The name of the fitness function to use.
+        args (argparse.Namespace): An object containing the configuration
+            and hyperparameters for the run.
+
+    Returns:
+        list[tuple[float, float]]: A list where each element is a tuple
+        containing the best and average fitness for a single generation. This
+        represents the full fitness history of the trial.
+    """
     seed = int(time.time()) + os.getpid() + trial_id
     random.seed(seed)
     np.random.seed(seed)
@@ -114,13 +158,19 @@ def run_single_trial(trial_id, algorithm_name, fitness_function_name, args):
 
 
 def validate_config(args):
-    """Validates configuration parameters to prevent resource exhaustion.
+    """Validates configuration parameters to prevent resource exhaustion attacks.
+
+    This function checks critical hyperparameters to ensure they fall within
+    reasonable, safe limits. It helps prevent scenarios where excessively large
+    values (e.g., population size) could lead to extreme memory usage or
+    where invalid values (e.g., negative mutation rate) could cause crashes.
 
     Args:
-        args (argparse.Namespace): Parsed command-line arguments.
+        args (argparse.Namespace): An object containing the parsed command-line
+            arguments and configuration parameters.
 
     Raises:
-        ValueError: If a parameter is outside its acceptable range.
+        ValueError: If any parameter is outside its acceptable range.
     """
     MAX_POPULATION_SIZE = 10**6  # Set a reasonable limit
     if not 0 < args.population_size <= MAX_POPULATION_SIZE:
@@ -144,16 +194,21 @@ def validate_config(args):
 
 
 def main(args):
-    """Main function to run and manage comparative experiments.
+    """Runs and manages a suite of comparative evolutionary algorithm experiments.
 
-    This function orchestrates a series of experiments as defined in the
-    `experiments` list. It runs multiple trials for each experiment,
-    handles parallel execution, aggregates the results, plots a comparative
-    graph, and saves the structured results to a JSON file.
+    This function serves as the main entry point for the experiment runner. It
+    orchestrates the entire process, including:
+    - Validating the configuration.
+    - Setting up a list of experiments to run.
+    - Executing trials for each experiment, either in serial or parallel.
+    - Aggregating the results from all trials.
+    - Generating a comparative plot of the results.
+    - Saving the complete configuration and aggregated results to a JSON file
+      for reproducibility and later analysis.
 
     Args:
-        args (argparse.Namespace): An object containing the parsed
-            command-line arguments and configuration from the YAML file.
+        args (argparse.Namespace): An object containing the parsed command-line
+            arguments and any settings loaded from a YAML configuration file.
     """
     validate_config(args)  # Validate the configuration first
 
@@ -226,12 +281,16 @@ def main(args):
 def plot_comparative_history(results, title, output_file):
     """Plots and saves a comparative graph of aggregated fitness histories.
 
+    This function is used to visualize the results of the comparative
+    experiments, plotting the mean best and average fitness for each
+    experimental setup.
+
     Args:
-        results (list[tuple[str, list[tuple[float, float]]]]): A list of
-            tuples, where each tuple contains a label for an experiment and
-            its aggregated fitness history (mean over trials).
+        results (list[tuple[str, list[tuple[float, float]]]]): A list where
+            each item is a tuple containing a label for an experiment and its
+            aggregated fitness history (mean over all trials).
         title (str): The title for the plot.
-        output_file (str): The filename to save the plot to.
+        output_file (str): The path to save the generated plot image.
     """
     plt.figure(figsize=(12, 8))
 

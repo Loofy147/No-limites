@@ -28,14 +28,15 @@ class AdaptiveEGA(EpigeneticAlgorithm):
         """Initializes the AdaptiveEGA.
 
         Args:
-            stagnation_limit (int, optional): The number of generations
-                without improvement before adaptation is triggered.
-                Defaults to 10.
-            adaptation_factor (float, optional): The factor by which to
-                increase the epigenome mutation rate during adaptation.
-                Defaults to 1.5.
+            stagnation_limit (int, optional): The number of consecutive
+                generations without fitness improvement before adaptation is
+                triggered. Defaults to 10.
+            adaptation_factor (float, optional): The factor by which the
+                epigenome mutation rate is multiplied during an adaptation
+                event. Defaults to 1.5.
             **kwargs: All other parameters required by the parent
-                `EpigeneticAlgorithm`.
+                `EpigeneticAlgorithm`, which are passed down to its
+                constructor.
         """
         # Initialize the parent class with all its required arguments
         super().__init__(**kwargs)
@@ -90,13 +91,19 @@ class AdaptiveEGA(EpigeneticAlgorithm):
             self.stagnation_counter = 0
 
     def get_state(self):
-        """Extends the parent `get_state` to include adaptive state.
+        """Serializes the current state, including adaptive parameters.
 
-        This ensures that all variables related to the adaptation mechanism
-        are saved during checkpointing, allowing for a correct resume.
+        This method extends the parent's `get_state` to also include all
+        variables related to the adaptation mechanism. This ensures that the
+        adaptive behavior can be correctly resumed from a checkpoint.
 
         Returns:
-            dict: The state dictionary, including adaptive parameters.
+            dict: The state dictionary, which includes the parent state and
+            an 'adaptive_state' dictionary with the following structure:
+            - 'stagnation_counter' (int): Current stagnation count.
+            - 'best_fitness_so_far' (float): Best fitness seen so far.
+            - 'epigenome_mutation_rate' (float): Current mutation rate.
+            - 'base_epigenome_mutation_rate' (float): The original rate.
         """
         state = super().get_state()
         state["adaptive_state"] = {
@@ -108,13 +115,14 @@ class AdaptiveEGA(EpigeneticAlgorithm):
         return state
 
     def set_state(self, state):
-        """Extends the parent `set_state` to restore adaptive state.
+        """Restores the full state, including adaptive parameters.
 
-        This ensures that all adaptive parameters are correctly restored
-        from a checkpoint.
+        This method extends the parent's `set_state` to also restore the
+        state of the adaptive mechanism from a checkpoint.
 
         Args:
-            state (dict): The state dictionary to restore.
+            state (dict): The state dictionary to restore. It must contain
+                the parent state keys and an 'adaptive_state' dictionary.
         """
         super().set_state(state)
         adaptive_state = state["adaptive_state"]
